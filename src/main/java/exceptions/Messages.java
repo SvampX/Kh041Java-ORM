@@ -4,7 +4,7 @@ public final class Messages {
 
     public static final String ERR_CANNOT_OBTAIN_ID = "Cannot obtain id";
 
-    public static final String ERR_CANNOT_OBTAIN_TABLE_CLASS = "Cannot obtain Table class";
+    public static final String ERR_CANNOT_OBTAIN_TABLE_CLASS = "class must have @Table annotation";
 
     public static final String ERR_CANNOT_OBTAIN_COLUMN_CLASS = "Cannot obtain Column class";
 

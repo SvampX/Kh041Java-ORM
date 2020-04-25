@@ -1,12 +1,15 @@
 package annotations.handlers;
 
+import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
+import annotations.Table;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -46,8 +49,8 @@ public class GeneratedValueHandler {
             throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_COLUMN_CLASS);
         }
         String name = field.getName();
-        if (!column.columnName().isEmpty()) {
-            name = column.columnName();
+        if (!column.name().isEmpty()) {
+            name = column.name();
         }
         return name;
     }
@@ -69,19 +72,24 @@ public class GeneratedValueHandler {
     private String getTableName(Class<?> clazz) {
         Table table = clazz.getAnnotation(Table.class);
         if (table == null) {
-            throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_TABLE_CLASS);
+            Entity entity = clazz.getAnnotation(Entity.class);
+            if (entity == null) {
+                throw new DataObtainingFailureException("Current class: " + clazz +
+                        Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
+            }
         }
 
-        return table.tableName();
+        return table.name();
     }
 
     private int getIdFromTable(String sqlQuery) throws DBException {
         int id = 0;
+        //need to get connection here
+        Connection connection = Test.connect();
         Statement statement;
         ResultSet resultSet;
         try {
-            //need to get connection here
-            statement = Test.connect().createStatement();
+            statement = connection.createStatement();
             resultSet = statement.executeQuery(sqlQuery);
             if (resultSet.next()) {
                 id = resultSet.getInt(1);
