@@ -8,6 +8,7 @@ import annotations.Id;
 public class SimpleEntity {
 
     @Id
+    @Column
     int nameId;
 
     @Column

@@ -1,5 +1,7 @@
 package annotations.handlers;
 
+import annotations.Id;
+
 import java.util.Set;
 
 public class DBTable {
@@ -7,6 +9,7 @@ public class DBTable {
     private Set<DBColumn> columnSet;
     private DBColumn primaryKey;
     private Class<?> myEntityClass;
+    private Id idAnnotation;
 
     public DBTable() {
     }
@@ -43,13 +46,13 @@ public class DBTable {
         this.myEntityClass = myEntityClass;
     }
 
-//    @Override
-//    public String toString() {
-//        return "DBTable{" +
-//                "name='" + name + '\'' +
-//                ",\n columnSet=" + columnSet +
-//                ",\n primaryKey=" + primaryKey +
-//                ",\n myEntityClass=" + myEntityClass.getName() +
-//                '}';
-//    }
+    @Override
+    public String toString() {
+        return "DBTable{" +
+                "name='" + name + '\'' +
+                ",\n columnSet=" + columnSet +
+                ",\n primaryKey=" + primaryKey +
+                ",\n myEntityClass=" + myEntityClass.getName() +
+                '}';
+    }
 }

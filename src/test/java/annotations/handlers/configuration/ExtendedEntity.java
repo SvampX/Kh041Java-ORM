@@ -9,13 +9,18 @@ import annotations.Table;
 @Table(name = "table_name")
 public class ExtendedEntity {
 
-    @Id(name = "name_id")
+    @Id
+    @Column(name = "name_id")
     int nameId;
 
     @Column(name = "user_name")
     String userName;
 
+    @Column(name = "real_name")
     String realName;
+
+    @Column(name = "java_object")
+    SimpleEntity simpleEntity;
 
     public ExtendedEntity() {
     }
@@ -40,8 +45,15 @@ public class ExtendedEntity {
         return realName;
     }
 
-    @Column(name = "real_name")
     public void setRealName(String realName) {
         this.realName = realName;
+    }
+
+    public SimpleEntity getSimpleEntity() {
+        return simpleEntity;
+    }
+
+    public void setSimpleEntity(SimpleEntity simpleEntity) {
+        this.simpleEntity = simpleEntity;
     }
 }
