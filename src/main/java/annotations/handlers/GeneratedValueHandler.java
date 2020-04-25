@@ -4,6 +4,7 @@ import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.Table;
+import connections.Test;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
@@ -45,9 +46,6 @@ public class GeneratedValueHandler {
 
     private String getColumnName(Field field) {
         Column column = field.getAnnotation(Column.class);
-        if (column == null) {
-            throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_COLUMN_CLASS);
-        }
         String name = field.getName();
         if (!column.name().isEmpty()) {
             name = column.name();
@@ -60,7 +58,7 @@ public class GeneratedValueHandler {
         query.append("select id from ").append(table).append(" where ");
         for (Map.Entry<String, Object> entry : columns.entrySet()) {
             String value = entry.getValue().toString();
-            if (entry.getValue() instanceof String) {
+            if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
                 value = "'" + entry.getValue() + "'";
             }
             query.append(entry.getKey()).append("=").append(value).append(" and ");
@@ -73,10 +71,7 @@ public class GeneratedValueHandler {
         Table table = clazz.getAnnotation(Table.class);
         if (table == null) {
             Entity entity = clazz.getAnnotation(Entity.class);
-            if (entity == null) {
-                throw new DataObtainingFailureException("Current class: " + clazz +
-                        Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
-            }
+            return entity.name();
         }
 
         return table.name();
@@ -84,11 +79,13 @@ public class GeneratedValueHandler {
 
     private int getIdFromTable(String sqlQuery) throws DBException {
         int id = 0;
-        //need to get connection here
-        Connection connection = Test.connect();
+        Connection connection;
         Statement statement;
         ResultSet resultSet;
         try {
+            //need to get connection here
+            connection = Test.getConnection();
+            assert connection != null;
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sqlQuery);
             if (resultSet.next()) {
