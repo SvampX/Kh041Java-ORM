@@ -51,12 +51,18 @@ public class ConnectionToDB {
     }
 
     public Connection getConnection() {
-        Connection con = availableConList.get(0);
-        unvailableConList.add(con);
-        availableConList.remove(con);
-        return con;
+        Connection con;
+        if(availableConList.size()>0) {
+            con = availableConList.get(0);
+            unvailableConList.add(con);
+            availableConList.remove(con);
+            return con;
+        }else{
+            con = getConnection();
+            unvailableConList.add(con);
+            return con;
+        }
     }
-
     public void releaseConnection(Connection con) {
         availableConList.add(con);
         unvailableConList.remove(con);
