@@ -19,17 +19,16 @@ public class ConnectionToDB {
     private List<Connection> unvailableConList = new ArrayList<>();
     private int defaultConNumber = 10;
 
-//    private static ConnectionToDB instance;
-//
-//    public static synchronized ConnectionToDB getInstance() throws SQLException {
-//        if (instance == null) {
-//            instance = new ConnectionToDB();
-//        }
-//        return instance;
-//    }
-//
-//    private ConnectionToDB() throws SQLException {
-    public ConnectionToDB() throws SQLException {
+    private static ConnectionToDB instance;
+
+    public static synchronized ConnectionToDB getInstance() throws SQLException {
+        if (instance == null) {
+            instance = new ConnectionToDB();
+        }
+        return instance;
+    }
+
+    private ConnectionToDB() throws SQLException {
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }

@@ -49,7 +49,7 @@ public class RelationsWithOneHandler {
         DBTable relationTable = getDbTableByClass(field.getType());
 
         DBColumn myTableKey = getMyTableKeyByReflectedKey(currentTable, relationTable, RelationType.OneToMany);
-        DBColumn otherTableKey = relationTable.getPrimaryKey();
+        DBColumn otherTableKey = getMyTableKeyByReflectedKey(relationTable, currentTable, RelationType.ManyToOne);
 
         return new ForeignKey(myTableKey, otherTableKey, relationTable, RelationType.ManyToOne, false);
     }
@@ -58,7 +58,7 @@ public class RelationsWithOneHandler {
         DBTable relationTable = getRelationTableForOneToMany(field.getAnnotation(OneToMany.class).mappedBy());
 
         DBColumn myTableKey = getMyTableKeyByReflectedKey(currentTable, relationTable, RelationType.ManyToOne);
-        DBColumn otherTableKey = relationTable.getPrimaryKey();
+        DBColumn otherTableKey = getMyTableKeyByReflectedKey(relationTable, currentTable, RelationType.OneToMany);
 
         return new ForeignKey(myTableKey, otherTableKey, relationTable, RelationType.OneToMany, false);
     }
