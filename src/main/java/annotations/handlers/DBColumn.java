@@ -10,12 +10,6 @@ public class DBColumn {
     public DBColumn() {
     }
 
-    public DBColumn(Field field, String name, Type type) {
-        this.field = field;
-        this.name = name;
-        this.type = type;
-    }
-
     public Field getField() {
         return field;
     }
