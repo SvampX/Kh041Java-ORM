@@ -8,6 +8,14 @@ public class ForeignKey {
     private RelationType relationType;
     private boolean hasRelations = false;
 
+    public ForeignKey(DBColumn myTableKey, DBColumn otherTableKey, DBTable otherTable, RelationType relationType, boolean hasRelations) {
+        this.myTableKey = myTableKey;
+        this.otherTableKey = otherTableKey;
+        this.otherTable = otherTable;
+        this.relationType = relationType;
+        this.hasRelations = hasRelations;
+    }
+
     public ForeignKey() {
     }
 
