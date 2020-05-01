@@ -1,5 +1,6 @@
 package annotations.handlers;
 
+import annotations.handlers.configuration.User;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import org.junit.jupiter.api.Assertions;

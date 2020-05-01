@@ -2,38 +2,37 @@ package annotations.handlers;
 
 import annotations.ManyToOne;
 import annotations.OneToMany;
+import annotations.OneToOne;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
-import java.util.Optional;
 import java.util.Set;
 
 public class RelationsWithOneHandler {
 
+    public static final Class<OneToMany> ONE_TO_MANY_CLASS = OneToMany.class;
+    public static final Class<ManyToOne> MANY_TO_ONE_CLASS = ManyToOne.class;
+    public static final Class<OneToOne> ONE_TO_ONE_CLASS = OneToOne.class;
+
     public void handle(Set<Class<?>> entitiesSet) {
         for (Class<?> cl : entitiesSet) {
             for (Field field : cl.getDeclaredFields()) {
-                if (field.isAnnotationPresent(OneToMany.class)) {
-                    handleOneToMany(cl, field);
-                } else if (field.isAnnotationPresent(ManyToOne.class)) {
-                    handleManyToOne(cl, field);
+                if (field.isAnnotationPresent(ONE_TO_MANY_CLASS)) {
+                    handleRelation(cl, field, RelationType.OneToMany);
+                } else if (field.isAnnotationPresent(MANY_TO_ONE_CLASS)) {
+                    handleRelation(cl, field, RelationType.ManyToOne);
+                } else if (field.isAnnotationPresent(ONE_TO_ONE_CLASS)) {
+                    handleRelation(cl, field, RelationType.OneToOne);
                 }
             }
         }
     }
 
-    private void handleOneToMany(Class<?> clazz, Field field) {
+    private void handleRelation(Class<?> clazz, Field field, RelationType relationType) {
         DBTable dbTable = getDbTableByClass(clazz);
 
-        ForeignKey newForeignKey = generateForeignKeyOneToMany(field, dbTable);
-        dbTable.getForeignKeys().add(newForeignKey);
-    }
-
-    private void handleManyToOne(Class<?> clazz, Field field) {
-        DBTable dbTable = getDbTableByClass(clazz);
-
-        ForeignKey newForeignKey = generateForeignKeyManyToOne(field, dbTable);
+        ForeignKey newForeignKey = generateForeignKey(field, dbTable, relationType);
         dbTable.getForeignKeys().add(newForeignKey);
     }
 
@@ -45,35 +44,19 @@ public class RelationsWithOneHandler {
                     .orElseThrow(DataObtainingFailureException::new);
     }
 
-    private ForeignKey generateForeignKeyManyToOne(Field field, DBTable currentTable) {
-        DBTable relationTable = getDbTableByClass(field.getType());
+    private ForeignKey generateForeignKey(Field field, DBTable currentTable, RelationType relationType) {
+        DBTable relationTable = null;
+        if (relationType == RelationType.ManyToOne || relationType == RelationType.OneToOne) {
+            relationTable = getDbTableByClass(field.getType());
+        } else if (relationType == RelationType.OneToMany) {
+            relationTable = getRelationTableForOneToMany(field.getAnnotation(ONE_TO_MANY_CLASS).mappedBy());
+        }
 
-        DBColumn myTableKey = getMyTableKeyByReflectedKey(currentTable, relationTable, RelationType.OneToMany);
-        DBColumn otherTableKey = getMyTableKeyByReflectedKey(relationTable, currentTable, RelationType.ManyToOne);
+        DBColumn myTableKey = currentTable.getPrimaryKey();
+        assert relationTable != null;
+        DBColumn otherTableKey = relationTable.getPrimaryKey();
 
-        return new ForeignKey(myTableKey, otherTableKey, relationTable, RelationType.ManyToOne, false);
-    }
-
-    private ForeignKey generateForeignKeyOneToMany(Field field, DBTable currentTable) {
-        DBTable relationTable = getRelationTableForOneToMany(field.getAnnotation(OneToMany.class).mappedBy());
-
-        DBColumn myTableKey = getMyTableKeyByReflectedKey(currentTable, relationTable, RelationType.ManyToOne);
-        DBColumn otherTableKey = getMyTableKeyByReflectedKey(relationTable, currentTable, RelationType.OneToMany);
-
-        return new ForeignKey(myTableKey, otherTableKey, relationTable, RelationType.OneToMany, false);
-    }
-
-    /**
-     * This method searches ForeignKey's object in the relationTable which links to currentTable
-     */
-    private DBColumn getMyTableKeyByReflectedKey(DBTable currentTable, DBTable relationTable,
-                                                 RelationType relationType) {
-        Optional<ForeignKey> keyOptional = relationTable.getForeignKeys()
-                .stream()
-                .filter(fk -> fk.getOtherTable() == currentTable && fk.getRelationType() == relationType)
-                .findFirst();
-
-        return keyOptional.map(ForeignKey::getOtherTableKey).orElseThrow(DataObtainingFailureException::new);
+        return new ForeignKey(myTableKey, otherTableKey, relationTable, relationType, false);
     }
 
     private DBTable getRelationTableForOneToMany(String mappedBy) {
@@ -81,7 +64,7 @@ public class RelationsWithOneHandler {
         Set<DBTable> dbTables = EntityToTableMapper.getTables();
         for (DBTable dbTable : dbTables) {
             for (Field field : dbTable.getMyEntityClass().getDeclaredFields()) {
-                if (field.isAnnotationPresent(ManyToOne.class) && field.getName().equalsIgnoreCase(mappedBy)) {
+                if (field.isAnnotationPresent(MANY_TO_ONE_CLASS) && field.getName().equalsIgnoreCase(mappedBy)) {
                     returnTable = dbTable;
                 }
             }
@@ -92,8 +75,5 @@ public class RelationsWithOneHandler {
         }
         return returnTable;
     }
-
-//    private DBTable getRelationTableForManyToOne(Class<?> type) {
-//    }
 
 }

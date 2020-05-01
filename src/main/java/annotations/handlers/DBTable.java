@@ -9,7 +9,6 @@ public class DBTable {
     private Class<?> myEntityClass;
     private Set<ForeignKey> foreignKeys;
 
-
     public DBTable() {
     }
 
