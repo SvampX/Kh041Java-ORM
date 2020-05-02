@@ -1,17 +1,28 @@
 package annotations.handlers;
 
+import annotations.handlers.configuration.ExtendedEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
 
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RelationsWithOneHandlerTest {
+    Reflections reflections;
+    Set<Class<?>> entities;
+
+    @BeforeEach
+    void setUp() {
+        reflections = new Reflections(ExtendedEntity.class);
+        EntityHandler.setReflections(reflections);
+        entities = EntityHandler.inspectEntities();
+    }
 
     @Test
     void handle() {
         //given
-        Set<Class<?>> entities = EntityHandler.inspectEntities();
         Set<DBTable> tables = EntityToTableMapper.getTables();
         RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
         //when
@@ -25,6 +36,7 @@ class RelationsWithOneHandlerTest {
                 assertNotNull(foreignKey.getOtherTableKey());
                 assertNotNull(foreignKey.getOtherTable());
                 assertNotNull(foreignKey.getRelationType());
+                System.out.println(foreignKey.toString());
             }
         }
     }

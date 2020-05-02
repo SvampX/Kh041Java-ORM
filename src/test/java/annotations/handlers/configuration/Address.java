@@ -12,18 +12,19 @@ import annotations.Table;
 public class Address {
     @Id
     @GeneratedValue
+    @Column(name = "id")
     private int id;
 
     @Column(name = "address_id")
     private String addressId;
 
-    @Column
+    @Column(name = "city")
     private String city;
 
-    @Column
+    @Column(name = "country")
     private String country;
 
-    @Column
+    @Column(name = "street_name")
     private String streetName;
 
     @Column(name = "postal_code")

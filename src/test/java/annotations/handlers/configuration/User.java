@@ -19,6 +19,7 @@ public class User {
 
     @Id
     @GeneratedValue
+    @Column(name = "id")
     private int id;
 
     @Column(name = "first_name")
@@ -27,7 +28,7 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column
+    @Column(name = "age")
     private int age;
 
     @OneToOne

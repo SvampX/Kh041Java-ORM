@@ -13,10 +13,10 @@ public class Phone {
 
     @Id
     @GeneratedValue
-    @Column
+    @Column(name = "id")
     private int id;
 
-    @Column
+    @Column(name = "number")
     private String number;
 
     @OneToOne
