@@ -1,5 +1,6 @@
 package annotations.handlers;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class DBTable {
@@ -7,7 +8,7 @@ public class DBTable {
     private Set<DBColumn> columnSet;
     private DBColumn primaryKey;
     private Class<?> myEntityClass;
-    private Set<ForeignKey> foreignKeys;
+    private Set<ForeignKey> foreignKeys = new HashSet<>();
 
 
     public DBTable() {

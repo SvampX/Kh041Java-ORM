@@ -1,12 +1,12 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.Id;
+import annotations.*;
 
-@Entity
+@Entity()
+@Table(name = "2ndTable")
 public class SimpleEntity {
 
+    @ManyToMany(tableName = "test",inverseJoinColumnsName = "secondId")
     @Id
     @Column
     int nameId;

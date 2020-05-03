@@ -4,7 +4,8 @@ import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.Table;
-import connections.Test;
+//import connections.Test;
+import connections.ConnectionToDB;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
@@ -83,8 +84,9 @@ public class GeneratedValueHandler {
         Statement statement;
         ResultSet resultSet;
         try {
+            ConnectionToDB ctdb = new ConnectionToDB();
             //need to get connection here
-            connection = Test.getConnection();
+            connection = ctdb.getConnection();
             assert connection != null;
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sqlQuery);

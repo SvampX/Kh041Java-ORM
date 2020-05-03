@@ -1,14 +1,13 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.Id;
-import annotations.Table;
+import annotations.*;
 
 @Entity(name = "EntityName")
-@Table(name = "table_name")
+@Table(name = "1stTable")
 public class ExtendedEntity {
 
+
+    @ManyToMany(tableName = "test", joinColumnsName = "firstId")
     @Id
     @Column(name = "name_id")
     int nameId;
