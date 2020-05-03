@@ -77,13 +77,13 @@ public class ManyToManyHandler {
         fk.setMyTableKey(key.getOtherTableKey());
         fk.setOtherTableKey(key.getMyTableKey());
         fk.setRelationType(RelationType.ManyToMany);
-        fk.setHasRelations(true);
+        fk.setHasRelationsTable(true);
         return fk;
     }
 
     private static ForeignKey getForeignKey(DBTable first, DBTable second, ManyToMany mtm) {
         ForeignKey fk = new ForeignKey();
-        fk.setHasRelations(true);
+        fk.setHasRelationsTable(true);
         fk.setRelationType(RelationType.ManyToMany);
         fk.setMyTableKey(findColumnByName(returnRightName(mtm), first));
         fk.setOtherTableKey(findColumnByField(mtm, second));

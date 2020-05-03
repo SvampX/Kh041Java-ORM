@@ -6,14 +6,14 @@ public class ForeignKey {
     private DBColumn otherTableKey;
     private DBTable otherTable;
     private RelationType relationType;
-    private boolean hasRelations = false;
+    private boolean hasRelationsTable = false;
 
-    public ForeignKey(DBColumn myTableKey, DBColumn otherTableKey, DBTable otherTable, RelationType relationType, boolean hasRelations) {
+    public ForeignKey(DBColumn myTableKey, DBColumn otherTableKey, DBTable otherTable, RelationType relationType, boolean hasRelationsTable) {
         this.myTableKey = myTableKey;
         this.otherTableKey = otherTableKey;
         this.otherTable = otherTable;
         this.relationType = relationType;
-        this.hasRelations = hasRelations;
+        this.hasRelationsTable = hasRelationsTable;
     }
 
     public ForeignKey() {
@@ -51,11 +51,11 @@ public class ForeignKey {
         this.relationType = relationType;
     }
 
-    public boolean isHasRelations() {
-        return hasRelations;
+    public boolean isHasRelationsTable() {
+        return hasRelationsTable;
     }
 
-    public void setHasRelations(boolean hasRelations) {
-        this.hasRelations = hasRelations;
+    public void setHasRelationsTable(boolean hasRelationsTable) {
+        this.hasRelationsTable = hasRelationsTable;
     }
 }
