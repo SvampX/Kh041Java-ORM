@@ -16,6 +16,7 @@ public class ConnectionToDB {
     private List<Connection> availableConList = new ArrayList<>();
     private List<Connection> unvailableConList = new ArrayList<>();
     private int defaultConNumber = 10;
+    String driver = "";
 
     public ConnectionToDB() throws SQLException {
         for (int i = 0; i < defaultConNumber; i++)
@@ -38,6 +39,7 @@ public class ConnectionToDB {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        driver = prop.getProperty("db.driver");
         return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"), prop.getProperty("db.password"));
     }
 
@@ -68,6 +70,9 @@ public class ConnectionToDB {
     public void releaseConnection(Connection con) {
         availableConList.add(con);
         unvailableConList.remove(con);
+    }
+    public String getDriver(){
+       return driver.split("\\.")[1];
     }
 }
 
