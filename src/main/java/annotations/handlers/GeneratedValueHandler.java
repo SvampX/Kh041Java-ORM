@@ -5,7 +5,7 @@ import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.Table;
 import connections.ConnectionToDB;
-import connections.Test;
+//import connections.Test;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;

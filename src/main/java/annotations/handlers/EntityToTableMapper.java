@@ -20,7 +20,6 @@ public class EntityToTableMapper {
     }
     public static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
     private static Set<DBTable> tables;
-
     private static Set<Field> getAnnotatedFields(Class<?> clazz, Class<? extends Annotation> annotation) {
         Set<Field> annotatedFields = new HashSet<>();
         for (Field field : clazz.getDeclaredFields()) {
@@ -32,9 +31,8 @@ public class EntityToTableMapper {
         return annotatedFields;
     }
 
-
     public static Set<DBTable> getTables() {
-        if (tables == null) {
+        if(tables == null){
             tables = mapTablesFromEntities();
         }
         return tables;

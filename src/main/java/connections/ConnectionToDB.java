@@ -8,6 +8,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -18,6 +19,7 @@ public class ConnectionToDB {
     private List<Connection> availableConList = new ArrayList<>();
     private List<Connection> unvailableConList = new ArrayList<>();
     private int defaultConNumber = 10;
+    String driver = "";
 
     private static ConnectionToDB instance;
 
@@ -49,6 +51,7 @@ public class ConnectionToDB {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        driver = prop.getProperty("db.driver");
         return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"),
                 prop.getProperty("db.password"));
     }
@@ -80,6 +83,9 @@ public class ConnectionToDB {
     public void releaseConnection(Connection con) {
         availableConList.add(con);
         unvailableConList.remove(con);
+    }
+    public String getDriver(){
+       return driver.split("\\.")[1];
     }
 }
 
