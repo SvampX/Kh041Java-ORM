@@ -5,7 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -16,8 +18,18 @@ public class ConnectionToDB {
     private List<Connection> availableConList = new ArrayList<>();
     private List<Connection> unvailableConList = new ArrayList<>();
     private int defaultConNumber = 10;
+    String driver = "";
 
-    public ConnectionToDB() throws SQLException {
+    private static ConnectionToDB instance;
+
+    public static synchronized ConnectionToDB getInstance() throws SQLException {
+        if (instance == null) {
+            instance = new ConnectionToDB();
+        }
+        return instance;
+    }
+
+    private ConnectionToDB() throws SQLException {
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }
@@ -38,7 +50,9 @@ public class ConnectionToDB {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"), prop.getProperty("db.password"));
+        driver = prop.getProperty("db.driver");
+        return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"),
+                prop.getProperty("db.password"));
     }
 
     private Properties getProperties(InputStream input) {
@@ -53,20 +67,23 @@ public class ConnectionToDB {
 
     public Connection getConnection() {
         Connection con;
-        if(availableConList.size()>0) {
+        if (availableConList.size() > 0) {
             con = availableConList.get(0);
             unvailableConList.add(con);
             availableConList.remove(con);
-            return con;
-        }else{
+        } else {
             con = getConnection();
             unvailableConList.add(con);
-            return con;
         }
+        return con;
     }
+
     public void releaseConnection(Connection con) {
         availableConList.add(con);
         unvailableConList.remove(con);
+    }
+    public String getDriver(){
+       return driver.split("\\.")[1];
     }
 }
 

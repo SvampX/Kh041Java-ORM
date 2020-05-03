@@ -81,14 +81,14 @@ public class GeneratedValueHandler {
         int id = 0;
         Connection connection = null;
         try {
-            connection = new ConnectionToDB().getConnection();
+            connection = ConnectionToDB.getInstance().getConnection();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         Statement statement;
         ResultSet resultSet;
         try {
-            //need to get connection here
+            connection = ConnectionToDB.getInstance().getConnection();
             assert connection != null;
             statement = connection.createStatement();
             resultSet = statement.executeQuery(sqlQuery);

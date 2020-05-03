@@ -17,6 +17,7 @@ public class ForeignKey {
         this.relationType = relationType;
         this.hasRelationsTable = hasRelationsTable;
     }
+
     public DBColumn getMyTableKey() {
         return myTableKey;
     }
@@ -55,5 +56,16 @@ public class ForeignKey {
 
     public void setHasRelationsTable(boolean hasRelationsTable) {
         this.hasRelationsTable = hasRelationsTable;
+    }
+
+    @Override
+    public String toString() {
+        return "ForeignKey{" +
+                "myTableKey=" + myTableKey.getName() +
+                ", otherTableKey=" + otherTableKey.getName() +
+                ", otherTable=" + otherTable.getName() +
+                ", relationType=" + relationType.name() +
+                ", hasRelations=" + hasRelationsTable +
+                '}';
     }
 }

@@ -14,14 +14,13 @@ import java.util.Set;
 
 
 public class EntityToTableMapper {
-    private static Set<DBTable> tables;
 
     //TODO move to session factory
     static {
         EntityHandler.inspectEntities();
     }
-
-    private static final Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    public static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    private static Set<DBTable> tables;
 
     private static Set<Field> getAnnotatedFields(Class<?> clazz, Class<? extends Annotation> annotation) {
         Set<Field> annotatedFields = new HashSet<>();
@@ -35,7 +34,7 @@ public class EntityToTableMapper {
     }
 
     public static Set<DBTable> getTables() {
-        if (tables == null) {
+        if(tables == null){
             tables = mapTablesFromEntities();
         }
         return tables;
