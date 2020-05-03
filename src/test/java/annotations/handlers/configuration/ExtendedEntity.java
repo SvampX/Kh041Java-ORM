@@ -2,12 +2,14 @@ package annotations.handlers.configuration;
 
 import annotations.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity(name = "EntityName")
 @Table(name = "1stTable")
 public class ExtendedEntity {
 
 
-    @ManyToMany(tableName = "test", joinColumnsName = "firstId")
     @Id
     @Column(name = "name_id")
     int nameId;
@@ -20,6 +22,9 @@ public class ExtendedEntity {
 
     @Column(name = "java_object")
     SimpleEntity simpleEntity;
+
+    @ManyToMany(tableName = "test", joinColumnsName = "firstId", joinColumnsReferencedName = "name_id")
+    Set<SimpleEntity> simpleEntities = new HashSet<>();
 
     public ExtendedEntity() {
     }

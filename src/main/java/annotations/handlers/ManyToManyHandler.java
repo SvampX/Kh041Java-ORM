@@ -1,6 +1,5 @@
 package annotations.handlers;
 
-
 import annotations.ManyToMany;
 
 import java.lang.reflect.Field;
@@ -12,7 +11,7 @@ public class ManyToManyHandler {
     private final static List<ManyToMany> manyToManyList = new ArrayList<>();
     private final static Map<ManyToMany, DBTable> manyToManyTableMap = new HashMap<>();
     private final static Map<ManyToMany, Field> manyToManyFieldMap = new HashMap<>();
-
+    private final static Map<ManyToMany, DBColumn> manyToManyReferencedColumnMap = new HashMap<>();
 
     private static void findMtmAnnotInEntities() {
 
@@ -23,6 +22,7 @@ public class ManyToManyHandler {
             for (Field field : classs.getDeclaredFields()) {
                 ManyToMany mtm = field.getAnnotation(ManyToMany.class);
                 if (mtm != null) {
+                    manyToManyReferencedColumnMap.put(mtm, findColumnByName(returnRightReferencedName(mtm), table));
                     manyToManyList.add(mtm);
                     manyToManyTableMap.put(mtm, table);
                     manyToManyFieldMap.put(mtm, field);
@@ -31,8 +31,8 @@ public class ManyToManyHandler {
         }
     }
 
-    public static void createJoinTables() {
 
+    public static void createJoinTables() {
         findMtmAnnotInEntities();
 
         while (manyToManyList.size() != 0) {
@@ -51,8 +51,6 @@ public class ManyToManyHandler {
             dbTable.setName(mtm.tableName());
             dbTable.setColumnSet(createColumnSet(mtm, secondMtm));
             createForeignKeys(dbTable, mtm, secondMtm);
-
-
         }
     }
 
@@ -86,7 +84,7 @@ public class ManyToManyHandler {
         fk.setHasRelationsTable(true);
         fk.setRelationType(RelationType.ManyToMany);
         fk.setMyTableKey(findColumnByName(returnRightName(mtm), first));
-        fk.setOtherTableKey(findColumnByField(mtm, second));
+        fk.setOtherTableKey(manyToManyReferencedColumnMap.get(mtm));
         fk.setOtherTable(second);
 
         return fk;
@@ -94,7 +92,6 @@ public class ManyToManyHandler {
 
 
     private static DBColumn findColumnByField(ManyToMany mtm, DBTable table) {
-
         for (DBColumn dbColumn : table.getColumnSet()) {
             if (dbColumn.getField().equals(manyToManyFieldMap.get(mtm)))
                 return dbColumn;
@@ -131,21 +128,35 @@ public class ManyToManyHandler {
 
         DBColumn dbColumn = new DBColumn();
         dbColumn.setName(returnRightName(mtm));
-        dbColumn.setField(manyToManyFieldMap.get(mtm));
-        dbColumn.setType(EntityToTableMapper.getColumnType(manyToManyFieldMap.get(mtm)));
+        dbColumn.setField(manyToManyReferencedColumnMap.get(mtm).getField());
+        dbColumn.setType(EntityToTableMapper.getColumnType(
+                manyToManyReferencedColumnMap.get(mtm).getField()));
 
         return dbColumn;
     }
-    private static String returnRightName(ManyToMany mtm){
-        if(mtm.inverseJoinColumnsName().equals("")) {
+
+    private static String returnRightName(ManyToMany mtm) {
+        if (mtm.inverseJoinColumnsName().equals("")) {
             return mtm.joinColumnsName();
-        }else{
+        } else {
             return mtm.inverseJoinColumnsName();
         }
 
     }
 
+    private static String returnRightReferencedName(ManyToMany mtm) {
+        if (mtm.inverseJoinColumnsReferencedName().equals("")) {
+            return mtm.joinColumnsReferencedName();
+        } else {
+            return mtm.inverseJoinColumnsReferencedName();
+        }
+    }
+
     public static List<ManyToMany> getManyToManyList() {
         return manyToManyList;
+    }
+
+    public static Map<ManyToMany, Field> getManyToManyFieldMap() {
+        return manyToManyFieldMap;
     }
 }

@@ -1,77 +1,68 @@
 package annotations.handlers;
 
 import annotations.handlers.configuration.ExtendedEntity;
-import exceptions.DBException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ManyToManyTest {
 
-    private Set<DBTable> dbTables;
-
-
     @Test
-    void standartTestWithTwoMtm(){
-
+    void standartTestWithTwoManyToMany() {
         Reflections reflections = new Reflections(ExtendedEntity.class);
         EntityHandler.setReflections(reflections);
-
-       //Set<DBTable> tables = EntityToTableMapper.getTables();
         ManyToManyHandler.createJoinTables();
-
 
         Set<DBTable> tables = EntityToTableMapper.getTables();
         DBTable joinTable = new DBTable();
         DBTable extendedEntityTable = new DBTable();
         DBTable simpleEntityTable = new DBTable();
 
-        for (DBTable table:tables) {
-            switch(table.getName()) {
+        for (DBTable table : tables) {
+            switch (table.getName()) {
                 case "test":
                     joinTable = table;
-
+                    break;
                 case "1stTable":
                     extendedEntityTable = table;
-
+                    break;
                 case "2ndTable":
                     simpleEntityTable = table;
+                    break;
             }
 
         }
-        ForeignKey fkFromExt = getForeignKeyFromOneSizeSet(extendedEntityTable.getForeignKeys());
-        ForeignKey fkFromSimple = getForeignKeyFromOneSizeSet(simpleEntityTable.getForeignKeys());
-        ForeignKey crossKeyForExt = findCrossKey(joinTable.getForeignKeys(), fkFromExt);
-        ForeignKey crossKeyForSimple = findCrossKey(joinTable.getForeignKeys(), fkFromSimple);
+        ForeignKey foreignKeyFromExtendedEntity = getForeignKeyFromOneSizeSet(extendedEntityTable.getForeignKeys());
+        ForeignKey foreignKeyFromSimpleEntity = getForeignKeyFromOneSizeSet(simpleEntityTable.getForeignKeys());
+        ForeignKey crossForeignKeyForExtendedEntity = findCrossKey(joinTable.getForeignKeys(), foreignKeyFromExtendedEntity);
+        ForeignKey crossForeignKeyForSimpleEntity = findCrossKey(joinTable.getForeignKeys(), foreignKeyFromSimpleEntity);
 
-        assertEquals(fkFromExt.getMyTableKey().getName(), crossKeyForExt.getOtherTableKey().getName());
-        assertEquals(fkFromSimple.getMyTableKey().getName(), crossKeyForSimple.getOtherTableKey().getName());
+        System.out.println(foreignKeyFromExtendedEntity.getMyTableKey().getName());
+        System.out.println(foreignKeyFromSimpleEntity.getMyTableKey().getName());
+        System.out.println(crossForeignKeyForExtendedEntity.getMyTableKey().getName());
+        System.out.println(crossForeignKeyForSimpleEntity.getMyTableKey().getName());
 
-
+        assertEquals(foreignKeyFromExtendedEntity.getMyTableKey().getName(), crossForeignKeyForExtendedEntity.getOtherTableKey().getName());
+        assertEquals(foreignKeyFromSimpleEntity.getMyTableKey().getName(), crossForeignKeyForSimpleEntity.getOtherTableKey().getName());
+        assertEquals(crossForeignKeyForExtendedEntity.getMyTableKey().getName(), "firstId");
+        assertEquals(crossForeignKeyForSimpleEntity.getMyTableKey().getName(), "secondId");
 
     }
-    private ForeignKey getForeignKeyFromOneSizeSet(Set<ForeignKey> set){
-        List<ForeignKey> list = new ArrayList<>();
-        for(ForeignKey fk : set){
-            list.add(fk);
+
+    private ForeignKey getForeignKeyFromOneSizeSet(Set<ForeignKey> set) {
+        for (ForeignKey fk : set) {
+            return fk;
         }
-    //    if(list.size() != 1){
-    //        throw new IllegalArgumentException();
-    //    }
-        return list.get(0);
-
+        return null;
     }
-    private ForeignKey findCrossKey(Set<ForeignKey> set, ForeignKey fk){
-        for(ForeignKey foreignKey : set){
-            if(foreignKey.getOtherTableKey() == fk.getMyTableKey())
-             return foreignKey;
+
+    private ForeignKey findCrossKey(Set<ForeignKey> set, ForeignKey fk) {
+        for (ForeignKey foreignKey : set) {
+            if (foreignKey.getOtherTableKey() == fk.getMyTableKey())
+                return foreignKey;
         }
         return null;
     }
