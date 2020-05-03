@@ -18,7 +18,8 @@ public class EntityToTableMapper {
     static {
         EntityHandler.inspectEntities();
     }
-    public static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    private static final Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    private static Set<DBTable> tables;
 
     private static Set<Field> getAnnotatedFields(Class<?> clazz, Class<? extends Annotation> annotation) {
         Set<Field> annotatedFields = new HashSet<>();
@@ -31,14 +32,21 @@ public class EntityToTableMapper {
         return annotatedFields;
     }
 
-    public static Set<DBTable> parse() {
+    public static Set<DBTable> getTables() {
+        if(tables == null){
+            tables = mapTablesFromEntities();
+        }
+        return tables;
+    }
+
+    private static Set<DBTable> mapTablesFromEntities() {
         Set<DBTable> tables = new HashSet<>();
         Map<Class<?>, String> entitiesWithTableName = getEntitiesWithTableNames(entitiesSet);
         for (Class<?> clazz : entitiesSet) {
             DBTable table = new DBTable();
             table.setName(entitiesWithTableName.get(clazz));
             table.setPrimaryKey(getPrimaryKey(clazz));
-            table.setColumnSet(getColumns(clazz));
+            table.setColumnSet(getColumns(clazz, table.getPrimaryKey()));
             table.setMyEntityClass(clazz);
             tables.add(table);
         }
@@ -57,9 +65,10 @@ public class EntityToTableMapper {
         return entityTableRelation;
     }
 
-    private static Set<DBColumn> getColumns(Class<?> entity) {
+    private static Set<DBColumn> getColumns(Class<?> entity, DBColumn pk) {
         Set<DBColumn> dbColumns;
         Set<Field> fields = getAnnotatedFields(entity, Column.class);
+        fields.remove(pk.getField());
         dbColumns = collectDBColumnsFromFields(fields);
         return dbColumns;
     }
@@ -75,11 +84,14 @@ public class EntityToTableMapper {
     }
 
     private static Set<DBColumn> collectDBColumnsFromFields(Set<Field> fieldSet) {
+        Column column;
         Set<DBColumn> dbColumns = new HashSet<>();
         for (Field f : fieldSet) {
             DBColumn dbColumn = new DBColumn();
             if (f.isAnnotationPresent(Column.class)) {
-                dbColumn.setName(f.getAnnotation(Column.class).name());
+                column = f.getAnnotation(Column.class);
+                dbColumn.setName(column.name());
+                dbColumn.setSize(column.length());
             }
             dbColumn.setField(f);
             dbColumn.setType(getColumnType(f));
@@ -88,7 +100,7 @@ public class EntityToTableMapper {
         return dbColumns;
     }
 
-    private static Type getColumnType(Field field) {
+    protected static Type getColumnType(Field field) {
         String fieldType = field.getType().getSimpleName();
         switch (fieldType.toLowerCase()) {
             case "string":

@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,24 +24,14 @@ public class ConnectionToDB {
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;
+        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
-            input = new FileInputStream("src/main/resources/config.properties");
+            input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
-        Properties prop = new Properties();
-
-        try {
-            prop.load(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(prop.getProperty("db.url"));
-        System.out.println(prop.getProperty("db.user"));
-        System.out.println(prop.getProperty("db.password"));
-        System.out.println(prop.getProperty("db.driver"));
+        Properties prop = getProperties(input);
 
         try {
             Class.forName(prop.getProperty("db.driver"));
@@ -48,6 +39,16 @@ public class ConnectionToDB {
             e.printStackTrace();
         }
         return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"), prop.getProperty("db.password"));
+    }
+
+    private Properties getProperties(InputStream input) {
+        Properties prop = new Properties();
+        try {
+            prop.load(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return prop;
     }
 
     public Connection getConnection() {

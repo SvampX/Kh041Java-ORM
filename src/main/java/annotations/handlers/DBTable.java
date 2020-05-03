@@ -1,7 +1,5 @@
 package annotations.handlers;
 
-import annotations.Id;
-
 import java.util.Set;
 
 public class DBTable {
@@ -9,7 +7,7 @@ public class DBTable {
     private Set<DBColumn> columnSet;
     private DBColumn primaryKey;
     private Class<?> myEntityClass;
-    private Id idAnnotation;
+    private Set<ForeignKey> foreignKeys;
 
     public DBTable() {
     }
