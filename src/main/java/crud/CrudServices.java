@@ -58,10 +58,20 @@ public class CrudServices {
     public void initTables(Connection connection) {
         try {
             Statement statement = connection.createStatement();
-            statement.executeQuery(getTablesDefineQuery());
+            statement.execute(getTablesDefineQuery());
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
     }
+
+    private String getSelectAllColumnsQuery(DBTable dbTable) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("SELECT * FROM ").append(dbTable.getName()).
+                append(" WHERE ").
+                append(dbTable.getPrimaryKey().getName()).
+                append(" = ? ;");
+        return builder.toString();
+    }
+
 
 }

@@ -4,14 +4,14 @@ import annotations.Column;
 import annotations.Entity;
 import annotations.Id;
 
-@Entity(name = "simple")
+@Entity
 public class SimpleEntity {
 
     @Id
-    @Column(name = "id")
+    @Column
     int nameId;
 
-    @Column(name = "user_name")
+    @Column
     String userName;
 
     public SimpleEntity() {
