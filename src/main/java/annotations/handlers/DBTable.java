@@ -8,6 +8,7 @@ public class DBTable {
     private Set<DBColumn> columnSet;
     private DBColumn primaryKey;
     private Class<?> myEntityClass;
+    private DBColumn joinColumn;
     private Set<ForeignKey> foreignKeys = new HashSet<>();
 
     public DBTable() {
@@ -43,6 +44,14 @@ public class DBTable {
 
     public void setMyEntityClass(Class<?> myEntityClass) {
         this.myEntityClass = myEntityClass;
+    }
+
+    public DBColumn getJoinColumn() {
+        return joinColumn;
+    }
+
+    public void setJoinColumn(DBColumn joinColumn) {
+        this.joinColumn = joinColumn;
     }
 
     public Set<ForeignKey> getForeignKeys() {

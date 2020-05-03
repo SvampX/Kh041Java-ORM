@@ -1,5 +1,6 @@
 package annotations.handlers;
 
+import annotations.JoinColumn;
 import annotations.ManyToOne;
 import annotations.OneToMany;
 import annotations.OneToOne;
@@ -56,6 +57,10 @@ public class RelationsWithOneHandler {
         assert relationTable != null;
         DBColumn otherTableKey = relationTable.getPrimaryKey();
 
+        if (field.isAnnotationPresent(JoinColumn.class)) {
+            setJoinColumnToDBTable(field, currentTable, relationTable);
+        }
+
         return new ForeignKey(myTableKey, otherTableKey, relationTable, relationType, false);
     }
 
@@ -74,6 +79,20 @@ public class RelationsWithOneHandler {
             throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_DBTABLE);
         }
         return returnTable;
+    }
+
+    private void setJoinColumnToDBTable(Field field, DBTable currentTable, DBTable relationTable) {
+        DBColumn joinDBColumn = new DBColumn();
+        String columnName = getJoinColumnName(field, relationTable);
+        joinDBColumn.setField(relationTable.getPrimaryKey().getField());
+        joinDBColumn.setName(columnName);
+        joinDBColumn.setType(EntityToTableMapper.getColumnType(field));
+        currentTable.setJoinColumn(joinDBColumn);
+    }
+
+    private String getJoinColumnName(Field field, DBTable relationTable) {
+        JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
+        return !joinColumn.name().isEmpty() ? joinColumn.name() : relationTable.getName() + "_id";
     }
 
 }

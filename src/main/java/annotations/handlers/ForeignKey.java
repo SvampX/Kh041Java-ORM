@@ -6,7 +6,7 @@ public class ForeignKey {
     private DBColumn otherTableKey;
     private DBTable otherTable;
     private RelationType relationType;
-    private boolean hasRelations = false;
+    private boolean hasRelationsTable = false;
 
     public ForeignKey() {
     }
@@ -17,7 +17,7 @@ public class ForeignKey {
         this.otherTableKey = otherTableKey;
         this.otherTable = otherTable;
         this.relationType = relationType;
-        this.hasRelations = hasRelations;
+        this.hasRelationsTable = hasRelations;
     }
 
     public DBColumn getMyTableKey() {
@@ -52,11 +52,22 @@ public class ForeignKey {
         this.relationType = relationType;
     }
 
-    public boolean isHasRelations() {
-        return hasRelations;
+    public boolean isHasRelationsTable() {
+        return hasRelationsTable;
     }
 
-    public void setHasRelations(boolean hasRelations) {
-        this.hasRelations = hasRelations;
+    public void setHasRelationsTable(boolean hasRelationsTable) {
+        this.hasRelationsTable = hasRelationsTable;
+    }
+
+    @Override
+    public String toString() {
+        return "ForeignKey{" +
+                "myTableKey=" + myTableKey.getName() +
+                ", otherTableKey=" + otherTableKey.getName() +
+                ", otherTable=" + otherTable.getName() +
+                ", relationType=" + relationType.name() +
+                ", hasRelations=" + hasRelationsTable +
+                '}';
     }
 }

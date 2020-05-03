@@ -4,6 +4,7 @@ import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.Id;
+import annotations.JoinColumn;
 import annotations.ManyToOne;
 import annotations.Table;
 
@@ -12,7 +13,7 @@ import annotations.Table;
 public class Address {
     @Id
     @GeneratedValue
-    @Column(name = "id")
+    @Column(name = "address_id")
     private int id;
 
     @Column(name = "address_id")
@@ -34,7 +35,7 @@ public class Address {
     private String type;
 
     @ManyToOne
-//    @JoinColumn(name = "users_id")
+    @JoinColumn(name = "users_id")
     private User userDetails;
 
     public Address() {
