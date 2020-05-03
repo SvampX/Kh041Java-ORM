@@ -17,7 +17,6 @@ public class ForeignKey {
         this.relationType = relationType;
         this.hasRelationsTable = hasRelationsTable;
     }
-
     public DBColumn getMyTableKey() {
         return myTableKey;
     }

@@ -44,6 +44,14 @@ public class DBTable {
         this.myEntityClass = myEntityClass;
     }
 
+    public Set<ForeignKey> getForeignKeys() {
+        return foreignKeys;
+    }
+
+    public void setForeignKeys(Set<ForeignKey> foreignKeys) {
+        this.foreignKeys = foreignKeys;
+    }
+
     @Override
     public String toString() {
         return "DBTable{" +
