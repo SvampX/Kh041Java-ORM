@@ -25,14 +25,14 @@ public class TablesInitializationTest {
         EntityHandler.setReflections(reflections);
         EntityToTableMapper.getTables().
                 stream().
-                filter(dbTable -> dbTable.getName().equals("table_name")).
+                filter(dbTable -> dbTable.getName().equals("1stTable")).
                 peek(dbTable -> tableToCreate.setPrimaryKey(dbTable.getPrimaryKey())).
                 map(DBTable::getColumnSet).
                 forEach(tableToCreate::setColumnSet);
         tableToCreate.setName("create_table_test");
         ConnectionToDB connectionToDB;
         try {
-            connectionToDB = new ConnectionToDB();
+            connectionToDB = ConnectionToDB.getInstance();
             connection = connectionToDB.getConnection();
         } catch (SQLException throwable) {
             throwable.printStackTrace();

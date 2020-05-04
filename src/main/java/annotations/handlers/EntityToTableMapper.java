@@ -14,7 +14,6 @@ import java.util.Set;
 
 
 public class EntityToTableMapper {
-
     //TODO move to session factory
     static {
         EntityHandler.inspectEntities();

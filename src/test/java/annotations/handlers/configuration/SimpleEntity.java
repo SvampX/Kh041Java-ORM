@@ -5,8 +5,8 @@ import annotations.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity()
-@Table(name = "2ndTable")
+@Entity
+@Table(name = "secondTable")
 public class SimpleEntity {
 
     @Id
@@ -16,7 +16,7 @@ public class SimpleEntity {
     @Column
     String userName;
 
-    @ManyToMany(tableName = "test", joinColumnsName = "secondId", joinColumnsReferencedName = "id")
+    @ManyToMany(tableName = "test", inverseJoinColumnsName = "secondId", inverseJoinColumnsReferencedName = "id")
     Set<ExtendedEntity> extendedEntities = new HashSet<>();
 
     public SimpleEntity() {

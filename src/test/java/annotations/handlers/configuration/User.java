@@ -14,7 +14,7 @@ import java.util.List;
  * This class created for testing purpose
  */
 @Entity
-@Table(name = "users")
+@Table(name = "test_users")
 public class User {
 
     @Id
@@ -36,6 +36,9 @@ public class User {
 
     @OneToMany(mappedBy = "userDetails")
     private List<Address> addresses;
+
+    public User() {
+    }
 
     public int getId() {
         return id;

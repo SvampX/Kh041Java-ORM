@@ -5,15 +5,10 @@ import connections.ConnectionToDB;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.reflections.Reflections;
 
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,12 +23,10 @@ class EntityToTableMapperTest {
     @BeforeAll
     void initContext() {
         try {
-            ConnectionToDB contextInitPoint= new ConnectionToDB();
+            ConnectionToDB contextInitPoint= ConnectionToDB.getInstance();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
-        Reflections reflections = new Reflections(ExtendedEntity.class);
-        EntityHandler.setReflections(reflections);
         dbTables = EntityToTableMapper.getTables();
         extendedColumnsNames = Set.of("name_id", "user_name", "real_name", "java_object");
         extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
@@ -44,12 +37,12 @@ class EntityToTableMapperTest {
     void defaultAnnotationNames() {
         DBTable simpleTable = new DBTable();
         for (DBTable dbt : dbTables) {
-            if (dbt.getName().equals("SimpleEntity")) {
+            if (dbt.getName().equals("secondTable")) {
                 simpleTable = dbt;
                 break;
             }
         }
-        assertEquals("SimpleEntity", simpleTable.getName());
+        assertEquals("secondTable", simpleTable.getName());
         Set<String> columnNames = simpleTable.getColumnSet().stream().map(DBColumn::getName).collect(Collectors.toSet());
         columnNames.forEach(columnName -> assertTrue(simpleColumnsNames.contains(columnName)));
     }
@@ -58,7 +51,7 @@ class EntityToTableMapperTest {
     void entityParsingTest() {
         DBTable extendedTable = new DBTable();
         for (DBTable dbt : dbTables) {
-            if (dbt.getName().equals("table_name")) {
+            if (dbt.getName().equals("firstTable")) {
                 extendedTable = dbt;
                 break;
             }
@@ -74,17 +67,5 @@ class EntityToTableMapperTest {
         assertEquals("INTEGER", Type.INTEGER.getSqlType());
         assertEquals(ExtendedEntity.class, extendedTable.getMyEntityClass());
         System.out.println("extendedTable = " + extendedTable);
-    }
-
-    @ParameterizedTest
-    @MethodSource(value = "prepareData")
-    public void test(String value, boolean isResultEnable) {
-
-        System.out.println(value);
-    }
-
-    private Stream<Arguments> prepareData() {
-        return Stream.of(Arguments.arguments("FIRST_TEST ", true),
-                Arguments.arguments("Second_test ", false));
     }
 }

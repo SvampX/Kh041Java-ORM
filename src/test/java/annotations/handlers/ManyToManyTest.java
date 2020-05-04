@@ -1,9 +1,11 @@
 package annotations.handlers;
 
 import annotations.handlers.configuration.ExtendedEntity;
+import connections.ConnectionToDB;
 import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 
+import java.sql.SQLException;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,9 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ManyToManyTest {
 
     @Test
-    void standartTestWithTwoManyToMany() {
-        Reflections reflections = new Reflections(ExtendedEntity.class);
-        EntityHandler.setReflections(reflections);
+    void standardTestWithTwoManyToMany() {
+        try {
+            ConnectionToDB contextInitPoint= ConnectionToDB.getInstance();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
         ManyToManyHandler.createJoinTables();
 
         Set<DBTable> tables = EntityToTableMapper.getTables();
@@ -33,7 +38,6 @@ public class ManyToManyTest {
                     simpleEntityTable = table;
                     break;
             }
-
         }
         ForeignKey foreignKeyFromExtendedEntity = getForeignKeyFromOneSizeSet(extendedEntityTable.getForeignKeys());
         ForeignKey foreignKeyFromSimpleEntity = getForeignKeyFromOneSizeSet(simpleEntityTable.getForeignKeys());
@@ -45,8 +49,10 @@ public class ManyToManyTest {
         System.out.println(crossForeignKeyForExtendedEntity.getMyTableKey().getName());
         System.out.println(crossForeignKeyForSimpleEntity.getMyTableKey().getName());
 
-        assertEquals(foreignKeyFromExtendedEntity.getMyTableKey().getName(), crossForeignKeyForExtendedEntity.getOtherTableKey().getName());
-        assertEquals(foreignKeyFromSimpleEntity.getMyTableKey().getName(), crossForeignKeyForSimpleEntity.getOtherTableKey().getName());
+        assertEquals(foreignKeyFromExtendedEntity.getMyTableKey().getName(),
+                crossForeignKeyForExtendedEntity.getOtherTableKey().getName());
+        assertEquals(foreignKeyFromSimpleEntity.getMyTableKey().getName(),
+                crossForeignKeyForSimpleEntity.getOtherTableKey().getName());
         assertEquals(crossForeignKeyForExtendedEntity.getMyTableKey().getName(), "firstId");
         assertEquals(crossForeignKeyForSimpleEntity.getMyTableKey().getName(), "secondId");
 
