@@ -5,7 +5,6 @@ import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.Table;
 import connections.ConnectionToDB;
-import connections.Test;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
@@ -80,11 +79,15 @@ public class GeneratedValueHandler {
 
     private int getIdFromTable(String sqlQuery) throws DBException {
         int id = 0;
-        Connection connection;
+        Connection connection = null;
+        try {
+            connection = ConnectionToDB.getInstance().getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         Statement statement;
         ResultSet resultSet;
         try {
-//            connection = Test.getConnection(); // on purpose for local test
             connection = ConnectionToDB.getInstance().getConnection();
             assert connection != null;
             statement = connection.createStatement();

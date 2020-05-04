@@ -1,6 +1,5 @@
 package annotations.handlers;
 
-
 public class ForeignKey {
     private DBColumn myTableKey;
     private DBColumn otherTableKey;
@@ -11,13 +10,12 @@ public class ForeignKey {
     public ForeignKey() {
     }
 
-    public ForeignKey(DBColumn myTableKey, DBColumn otherTableKey, DBTable otherTable,
-                      RelationType relationType, boolean hasRelations) {
+    public ForeignKey(DBColumn myTableKey, DBColumn otherTableKey, DBTable otherTable, RelationType relationType, boolean hasRelationsTable) {
         this.myTableKey = myTableKey;
         this.otherTableKey = otherTableKey;
         this.otherTable = otherTable;
         this.relationType = relationType;
-        this.hasRelationsTable = hasRelations;
+        this.hasRelationsTable = hasRelationsTable;
     }
 
     public DBColumn getMyTableKey() {

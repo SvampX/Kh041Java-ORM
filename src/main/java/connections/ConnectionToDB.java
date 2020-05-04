@@ -1,5 +1,8 @@
 package connections;
 
+import annotations.handlers.EntityHandler;
+import org.reflections.Reflections;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,6 +21,7 @@ public class ConnectionToDB {
     private List<Connection> availableConList = new ArrayList<>();
     private List<Connection> unvailableConList = new ArrayList<>();
     private int defaultConNumber = 10;
+    String driver = "";
 
     private static ConnectionToDB instance;
 
@@ -29,13 +33,32 @@ public class ConnectionToDB {
     }
 
     private ConnectionToDB() throws SQLException {
+        initContext();
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }
 
+    public static void initContext() {
+        StackTraceElement e[] = Thread.currentThread().getStackTrace();
+        String callingClassName = e[4].getClassName();
+        System.out.println(callingClassName);
+        try {
+            Class clazz = Class.forName(callingClassName);
+        } catch (ClassNotFoundException classNotFoundException) {
+            classNotFoundException.printStackTrace();
+        }
+        Reflections reflections;
+        try {
+            reflections = new Reflections(Class.forName("annotations.handlers.EntityToTableMapperTest"));
+            EntityHandler.setReflections(reflections);
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     private Connection createConnection() throws SQLException {
         InputStream input = null;
-        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
             input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {
@@ -49,13 +72,13 @@ public class ConnectionToDB {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        driver = prop.getProperty("db.driver");
         return DriverManager.getConnection(prop.getProperty("db.url"), prop.getProperty("db.user"),
                 prop.getProperty("db.password"));
     }
 
     private Properties getProperties(InputStream input) {
         Properties prop = new Properties();
-
         try {
             prop.load(input);
         } catch (IOException e) {
@@ -80,6 +103,9 @@ public class ConnectionToDB {
     public void releaseConnection(Connection con) {
         availableConList.add(con);
         unvailableConList.remove(con);
+    }
+    public String getDriver(){
+       return driver.split("\\.")[1];
     }
 }
 
