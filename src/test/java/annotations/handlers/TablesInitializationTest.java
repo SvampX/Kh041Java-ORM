@@ -58,5 +58,16 @@ public class TablesInitializationTest {
         CrudServices crudServices = new CrudServices();
         crudServices.initTables(connection);
 
+        String dropTestTables = "DROP TABLE IF EXISTS test_users;\n" +
+                "DROP TABLE IF EXISTS firstTable;\n" +
+                "DROP TABLE IF EXISTS phones;\n" +
+                "DROP TABLE IF EXISTS addresses; \n" +
+                "DROP TABLE IF EXISTS secondTable; ";
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute(dropTestTables);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }

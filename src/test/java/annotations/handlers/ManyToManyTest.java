@@ -31,10 +31,10 @@ public class ManyToManyTest {
                 case "test":
                     joinTable = table;
                     break;
-                case "1stTable":
+                case "firstTable":
                     extendedEntityTable = table;
                     break;
-                case "2ndTable":
+                case "secondTable":
                     simpleEntityTable = table;
                     break;
             }

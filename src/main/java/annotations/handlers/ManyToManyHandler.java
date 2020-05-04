@@ -100,7 +100,10 @@ public class ManyToManyHandler {
     }
 
     private static DBColumn findColumnByName(String name, DBTable table) {
-
+        if(table.getPrimaryKey() != null){
+            if (table.getPrimaryKey().getName().equals(name))
+                return table.getPrimaryKey();
+        }
         for (DBColumn dbColumn : table.getColumnSet()) {
             if (dbColumn.getName().equals(name))
                 return dbColumn;
@@ -113,7 +116,7 @@ public class ManyToManyHandler {
             ManyToMany tmp;
             tmp = first;
             first = second;
-            second = first;
+            second = tmp;
         }
     }
 
