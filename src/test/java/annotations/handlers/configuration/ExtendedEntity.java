@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "EntityName")
-@Table(name = "1stTable")
+@Table(name = "firstTable")
 public class ExtendedEntity {
 
 
