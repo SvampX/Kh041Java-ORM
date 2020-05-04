@@ -29,9 +29,9 @@ public class GeneratedValueHandler {
 
     SequenceGenerator sequenceGenerator;
 
-    public String createIdGenerator(DBColumn primaryKey, DBTable table) throws SQLException {
+    public String createIdGenerator(DBTable table) throws SQLException {
         String idScript = null;
-        Field idField = primaryKey.getField();
+        Field idField = table.getPrimaryKey().getField();
 
         GeneratedValue generatedValue = idField.getAnnotation(GeneratedValue.class);
         if (generatedValue == null) {

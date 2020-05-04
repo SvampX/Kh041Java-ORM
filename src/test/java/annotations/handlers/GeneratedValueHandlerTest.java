@@ -46,7 +46,7 @@ class GeneratedValueHandlerTest {
 
         //when, then
         for (DBTable dbTable : tables) {
-            String idScript = generatedValueHandler.createIdGenerator(dbTable.getPrimaryKey(), dbTable);
+            String idScript = generatedValueHandler.createIdGenerator(dbTable);
             assertNotNull(idScript);
             System.out.println(idScript);
         }
