@@ -13,4 +13,6 @@ public final class Messages {
     public static final String ERR_CANNOT_OBTAIN_SEQUENCE_GENERATOR_CLASS =
             "Cannot obtain SequenceGenerator class. Must use " +
                     "@SequenceGenerator annotation to determine generator for sequence";
+
+    public static final String ERR_DB_DIALECT_IS_NOT_SUPPORTED = "This database dialect is not supported";
 }

@@ -17,7 +17,7 @@ public class GeneratedValueHandler {
     SequenceGenerator sequenceGenerator;
 
     public String createIdGenerator(DBColumn primaryKey, DBTable table) throws SQLException {
-        String idScript = "";
+        String idScript = null;
         Field idField = primaryKey.getField();
 
         GeneratedValue generatedValue = idField.getAnnotation(GeneratedValue.class);
@@ -38,8 +38,13 @@ public class GeneratedValueHandler {
 
     private String generateAutoScript(Field idField, GeneratedValue generatedValue, DBTable table) throws SQLException {
         String dbDialect = ConnectionToDB.getInstance().getDialect();
-
-        return null;
+        if ("mysql".equalsIgnoreCase(dbDialect)) {
+            return generateIdentityScript(idField);
+        } else if ("postgresql".equalsIgnoreCase(dbDialect)) {
+            return generateIdSequenceScript(idField, generatedValue, table);
+        } else {
+            throw new IllegalArgumentException(Messages.ERR_DB_DIALECT_IS_NOT_SUPPORTED);
+        }
     }
 
     private String generateIdentityScript(Field field) {
@@ -81,7 +86,7 @@ public class GeneratedValueHandler {
 
     private String createSequenceScript(GeneratedValue generatedValue, SequenceGenerator sequenceGenerator,
                                         DBTable table) {
-        String sequenceScript = "";
+        String sequenceScript;
         String sequenceName = getSequenceName(generatedValue, sequenceGenerator, table);
         if (hasGenerator(generatedValue)) {
             sequenceScript = "CREATE SEQUENCE " + getSequenceName(generatedValue, sequenceGenerator, table);
@@ -107,22 +112,19 @@ public class GeneratedValueHandler {
         if (sequenceGenerator.sequenceName().isEmpty()) {
             return table.getName() + "_id_seq";
         }
+
         return sequenceGenerator.sequenceName();
     }
 
     private String getSqlIdType(Field field) {
-        String type = "";
         String fieldType = field.getType().getSimpleName();
-
         if ("int".equalsIgnoreCase(fieldType) || "Integer".equalsIgnoreCase(fieldType)) {
-            type = "INT";
+            return "INT";
         } else if ("long".equalsIgnoreCase(fieldType) || "Long".equalsIgnoreCase(fieldType)) {
-            type = "BIGINT";
+            return "BIGINT";
         } else {
             throw new DataObtainingFailureException(Messages.ERR_INAPPROPRIATE_ID_TYPE);
         }
-
-        return type;
     }
 
     private SequenceGenerator getSequenceGenerator(Field field) {
