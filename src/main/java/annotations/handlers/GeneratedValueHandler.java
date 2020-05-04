@@ -1,100 +1,132 @@
 package annotations.handlers;
 
-import annotations.Column;
-import annotations.Entity;
 import annotations.GeneratedValue;
-import annotations.Table;
-import connections.Test;
+import annotations.GenerationType;
+import annotations.SequenceGenerator;
+import connections.ConnectionToDB;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 
 public class GeneratedValueHandler {
+    SequenceGenerator sequenceGenerator;
 
-    public void setGeneratedIdValue(Object object) throws IllegalAccessException, DBException {
-        Class<?> clazz = object.getClass();
-        Field field = null;
-        if (!clazz.isAnnotationPresent(Entity.class)) {
-            throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
-        }
-        String tableName = getTableName(clazz);
-        
-        Map<String, Object> columns = new HashMap<>();
-        for (Field f : clazz.getDeclaredFields()) {
-            if (f.isAnnotationPresent(Column.class)) {
-                f.setAccessible(true);
-                columns.put(getColumnName(f), f.get(object));
-            } else if (f.isAnnotationPresent(GeneratedValue.class)){
-                field = f;
-            }
+    public String createIdGenerator(DBColumn primaryKey, DBTable table) throws SQLException {
+        String idScript = "";
+        Field idField = primaryKey.getField();
+
+        GeneratedValue generatedValue = idField.getAnnotation(GeneratedValue.class);
+        if (generatedValue == null) {
+            throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_GENERATED_VALUE);
         }
 
-        if (field != null) {
-            String sqlQuery = createQuery(columns, tableName);
-            field.setAccessible(true);
-            field.setInt(object, getIdFromTable(sqlQuery));
+        GenerationType generationType = generatedValue.strategy();
+        if (generationType == GenerationType.IDENTITY) {
+            idScript = generateIdentityScript(idField);
+        } else if (generationType == GenerationType.SEQUENCE) {
+            idScript = generateIdSequenceScript(idField, generatedValue, table);
+        } else if (generationType == GenerationType.AUTO) {
+            idScript = generateAutoScript(idField, generatedValue, table);
         }
+        return idScript;
     }
 
-    private String getColumnName(Field field) {
-        Column column = field.getAnnotation(Column.class);
-        String name = field.getName();
-        if (!column.name().isEmpty()) {
-            name = column.name();
-        }
-        return name;
+    private String generateAutoScript(Field idField, GeneratedValue generatedValue, DBTable table) throws SQLException {
+        String dbDialect = ConnectionToDB.getInstance().getDialect();
+
+        return null;
     }
 
-    private String createQuery(Map<String, Object> columns, String table) {
-        StringBuilder query = new StringBuilder();
-        query.append("select id from ").append(table).append(" where ");
-        for (Map.Entry<String, Object> entry : columns.entrySet()) {
-            String value = entry.getValue().toString();
-            if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
-                value = "'" + entry.getValue() + "'";
-            }
-            query.append(entry.getKey()).append("=").append(value).append(" and ");
-        }
-        query.delete(query.length() - 5, query.length());
-        return query.toString();
+    private String generateIdentityScript(Field field) {
+        String type = getSqlIdType(field);
+
+        return "ID " + type + " NOT NULL PRIMARY KEY AUTO_INCREMENT";
     }
 
-    private String getTableName(Class<?> clazz) {
-        Table table = clazz.getAnnotation(Table.class);
-        if (table == null) {
-            Entity entity = clazz.getAnnotation(Entity.class);
-            return entity.name();
+    private String generateIdSequenceScript(Field field, GeneratedValue generatedValue, DBTable table) {
+        String type = getSqlIdType(field);
+        sequenceGenerator = getSequenceGenerator(field);
+
+        String sequenceScript = createSequenceScript(generatedValue, sequenceGenerator, table);
+        try {
+            insertSequenceToDB(sequenceScript);
+        } catch (DBException e) {
+            e.printStackTrace();
         }
 
-        return table.name();
+        return "ID " + type + " NOT NULL PRIMARY KEY " + "DEFAULT NEXTVAL('" +
+                getSequenceName(generatedValue, sequenceGenerator, table) + "')";
     }
 
-    private int getIdFromTable(String sqlQuery) throws DBException {
-        int id = 0;
+    private void insertSequenceToDB(String sequenceScript) throws DBException {
         Connection connection;
         Statement statement;
-        ResultSet resultSet;
+        boolean success;
         try {
-            //need to get connection here
-            connection = Test.getConnection();
-            assert connection != null;
+            connection = ConnectionToDB.getInstance().getConnection();
             statement = connection.createStatement();
-            resultSet = statement.executeQuery(sqlQuery);
-            if (resultSet.next()) {
-                id = resultSet.getInt(1);
+            success = statement.execute(sequenceScript);
+            if (!success) {
+                throw new DataObtainingFailureException(Messages.ERR_CANNOT_INSERT_SEQUENCE);
             }
         } catch (SQLException e) {
-            throw new DBException(Messages.ERR_CANNOT_OBTAIN_ID, e);
+            throw new DBException(Messages.ERR_CANNOT_INSERT_SEQUENCE, e);
         }
-        return id;
     }
 
+    private String createSequenceScript(GeneratedValue generatedValue, SequenceGenerator sequenceGenerator,
+                                        DBTable table) {
+        String sequenceScript = "";
+        String sequenceName = getSequenceName(generatedValue, sequenceGenerator, table);
+        if (hasGenerator(generatedValue)) {
+            sequenceScript = "CREATE SEQUENCE " + getSequenceName(generatedValue, sequenceGenerator, table);
+        } else {
+            if (sequenceGenerator == null) {
+                throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_SEQUENCE_GENERATOR_CLASS);
+            }
+            sequenceScript = "CREATE SEQUENCE " + sequenceName + " START WITH " + sequenceGenerator.initialValue() +
+                    " INCREMENT BY " + sequenceGenerator.allocationSize();
+        }
+
+        return sequenceScript;
+    }
+
+    private boolean hasGenerator(GeneratedValue generatedValue) {
+        return generatedValue.generator().isEmpty();
+    }
+
+    private String getSequenceName(GeneratedValue generatedValue, SequenceGenerator sequenceGenerator, DBTable table) {
+        if (hasGenerator(generatedValue)) {
+            return table.getName() + "_id_seq";
+        }
+        if (sequenceGenerator.sequenceName().isEmpty()) {
+            return table.getName() + "_id_seq";
+        }
+        return sequenceGenerator.sequenceName();
+    }
+
+    private String getSqlIdType(Field field) {
+        String type = "";
+        String fieldType = field.getType().getSimpleName();
+
+        if ("int".equalsIgnoreCase(fieldType) || "Integer".equalsIgnoreCase(fieldType)) {
+            type = "INT";
+        } else if ("long".equalsIgnoreCase(fieldType) || "Long".equalsIgnoreCase(fieldType)) {
+            type = "BIGINT";
+        } else {
+            throw new DataObtainingFailureException(Messages.ERR_INAPPROPRIATE_ID_TYPE);
+        }
+
+        return type;
+    }
+
+    private SequenceGenerator getSequenceGenerator(Field field) {
+        return field.getAnnotation(SequenceGenerator.class);
+    }
 }
+

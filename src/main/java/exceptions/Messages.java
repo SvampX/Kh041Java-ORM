@@ -2,11 +2,15 @@ package exceptions;
 
 public final class Messages {
 
-    public static final String ERR_CANNOT_OBTAIN_ID = "Cannot obtain id";
+    public static final String ERR_CANNOT_INSERT_SEQUENCE = "Cannot insert current sequence into database";
 
-    public static final String ERR_CANNOT_OBTAIN_TABLE_CLASS = "class must have @Table annotation";
+    public static final String ERR_CANNOT_OBTAIN_GENERATED_VALUE =
+            "Current field is not annotated with @GeneratedValue annotation";
 
-    public static final String ERR_CANNOT_OBTAIN_COLUMN_CLASS = "Cannot obtain Column class";
+    public static final String ERR_INAPPROPRIATE_ID_TYPE =
+            "Inappropriate type for id field. Must be: int, Integer, long or Long";
 
-    public static final String ERR_CANNOT_OBTAIN_ENTITY_CLASS = " must be annotated with @Entity";
+    public static final String ERR_CANNOT_OBTAIN_SEQUENCE_GENERATOR_CLASS =
+            "Cannot obtain SequenceGenerator class. Must use " +
+                    "@SequenceGenerator annotation to determine generator for sequence";
 }
