@@ -27,7 +27,7 @@ public class GeneratedValueHandler {
             throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
         }
         String tableName = getTableName(clazz);
-        
+
         Map<String, Object> columns = new HashMap<>();
         for (Field f : clazz.getDeclaredFields()) {
             if (f.isAnnotationPresent(Column.class)) {

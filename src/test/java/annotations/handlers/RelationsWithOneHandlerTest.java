@@ -63,8 +63,18 @@ class RelationsWithOneHandlerTest {
                     assertNotNull(dbTable.getJoinColumn());
                     System.out.println("table: " + dbTable.getName() + " joinColumn name: " +
                             dbTable.getJoinColumn().getName());
+                    DBTable relationTable = getDbTableByClass(field.getType());
+                    assertSame(dbTable.getJoinColumn().getField(), relationTable.getPrimaryKey().getField());
                 }
             }
         }
+    }
+
+    private DBTable getDbTableByClass(Class<?> clazz) {
+        return EntityToTableMapper.getTables()
+                .stream()
+                .filter(table -> table.getMyEntityClass() == clazz)
+                .findFirst()
+                .orElseThrow(DataObtainingFailureException::new);
     }
 }
