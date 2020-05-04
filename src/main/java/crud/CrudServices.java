@@ -1,17 +1,27 @@
 package crud;
 
+import annotations.Column;
+import annotations.Entity;
+import annotations.Table;
 import annotations.handlers.DBColumn;
 import annotations.handlers.DBTable;
 import annotations.handlers.EntityToTableMapper;
 import annotations.handlers.Type;
+import exceptions.DBException;
+import exceptions.DataObtainingFailureException;
+import exceptions.Messages;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Set;
+import java.util.*;
 
 public class CrudServices {
     Set<DBTable> tables = EntityToTableMapper.getTables();
+    Map<Class, ExistingQuery> queryWithTypesList = new HashMap<>();
+
+    //Tables definition section
 
     private String getTablesDefineQuery() {
         StringBuilder builder = new StringBuilder();
@@ -64,13 +74,151 @@ public class CrudServices {
         }
     }
 
-    private String getSelectAllColumnsQuery(DBTable dbTable) {
+    //TODO Read processing section
+
+    public Object readEntityById(Object id, Object entity) {
+        Class<?> clazz = entity.getClass();
+        isEntityCheck(clazz);
+        DBTable table = getTableByClass(clazz);
+        assert table != null;
+        String preparedQuery =  createSelectAllByPrimaryKeyQuery(table);
+
+
+        return entity;
+    }
+
+//    public Object readEntityByPartialInitializedInstance(Object object) throws IllegalAccessException, DBException {
+//        Class<?> clazz = object.getClass();
+//        isEntityCheck(clazz);
+//        String tableName = getTableNameByClass(clazz);
+//        DBTable table = getTableByClass(clazz);
+//        Map<String, Object> columns = new HashMap<>();
+//        for (Field f : clazz.getDeclaredFields()) {
+//            if (f.isAnnotationPresent(Column.class)) {
+//                f.setAccessible(true);
+//                columns.put(getColumnName(f), f.get(object));
+//            }
+//        }
+//
+//        //TODO
+//
+//        return object;
+//    }
+
+    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
         StringBuilder builder = new StringBuilder();
-        builder.append("SELECT * FROM ").append(dbTable.getName()).
+        builder.append("SELECT * FROM ").
+                append(dbTable.getName()).
                 append(" WHERE ").
                 append(dbTable.getPrimaryKey().getName()).
                 append(" = ? ;");
         return builder.toString();
+    }
+
+    private String getColumnName(Field field) {
+        Column column = field.getAnnotation(Column.class);
+        String name = field.getName();
+        if (!column.name().isEmpty()) {
+            name = column.name();
+        }
+        return name;
+    }
+
+    private String createSelectQuery(Map<String, Object> columns, String table) {
+        StringBuilder query = new StringBuilder();
+        query.append("select id from ").append(table).append(" where ");
+        for (Map.Entry<String, Object> entry : columns.entrySet()) {
+            if (entry.getValue() != null) {
+                String value = entry.getValue().toString();
+                if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
+                    value = "'" + entry.getValue() + "'";
+                }
+                query.append(entry.getKey()).append("=").append(value).append(" and ");
+            }
+        }
+        query.delete(query.length() - 5, query.length());
+        query.append(';');
+        return query.toString();
+    }
+
+    private String getTableNameByClass(Class<?> clazz) {
+        Table table = clazz.getAnnotation(Table.class);
+        if (table == null) {
+            Entity entity = clazz.getAnnotation(Entity.class);
+            return entity.name();
+        }
+
+        return table.name();
+    }
+
+//    private String getSelectByEntityObjectPreparedQuery(Object object) {
+//        Class clazz = object.getClass();
+//        String preparedQuery;
+//        StringBuilder builder = new StringBuilder();
+//        DBTable dbTable = getTableByClass(clazz);
+//        if (dbTable == null) {
+//            throw new DataObtainingFailureException(clazz.getSimpleName() + " is not Entity annotated class");
+//        }
+//        preparedQuery = parseSelectTableToPreparedQuery(dbTable, object);
+//
+//        return builder.toString();
+//    }
+
+//    private String parseSelectTableToPreparedQuery(DBTable dbTable, Object object) {
+//        ExistingQuery existingQuery = new ExistingQuery();
+//        String query;
+//        StringBuilder builder = new StringBuilder();
+//        DBColumn primaryKey = dbTable.getPrimaryKey();
+//        Set<DBColumn> columns = dbTable.getColumnSet();
+//        try {
+//            if (primaryKey.getField().get(new Object()) != null) {
+//                existingQuery.addColumn(primaryKey);
+//                query = createSelectAllByPrimaryKeyQuery(dbTable);
+//                existingQuery.setQuery(query);
+//                queryWithTypesList.put(object.getClass(), existingQuery);
+//                return query;
+//            }
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
+//        builder.append("SELECT * FROM ").
+//                append(dbTable.getName()).
+//                append(" WHERE ");
+//        for (DBColumn column : columns) {
+//            try {
+//                if (column.getField().get(new Object()) != null) {
+//                    queryColumns.add(column);
+//                    builder.append(column.getName()).
+//                            append(" = ? and ");
+//                }
+//            } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        if (queryColumns.size() < 1) {
+//            throw new IllegalStateException("Entity instance should have " +
+//                    "at least 1 initialized field annotated with @Column");
+//        }
+//        builder.delete(builder.length() - 4, builder.length());
+//        builder.append(';');
+//        query = builder.toString();
+//        queryWithTypesList.put(query, queryColumns);
+//        return query;
+//    }
+
+    private DBTable getTableByClass(Class clazz) {
+        for (DBTable dbt : tables) {
+            if (dbt.getMyEntityClass().equals(clazz)) {
+                return dbt;
+            }
+        }
+        return null;
+    }
+
+    private void isEntityCheck(Class<?> clazz) {
+        if (!clazz.isAnnotationPresent(Entity.class)) {
+            throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
+        }
     }
 
 

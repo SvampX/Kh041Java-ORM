@@ -65,7 +65,7 @@ public class TablesInitializationTest {
                 "DROP TABLE IF EXISTS secondTable; ";
         try {
             Statement statement = connection.createStatement();
-            statement.execute(dropTestTables);
+            //statement.execute(dropTestTables);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }

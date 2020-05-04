@@ -68,4 +68,13 @@ class EntityToTableMapperTest {
         assertEquals(ExtendedEntity.class, extendedTable.getMyEntityClass());
         System.out.println("extendedTable = " + extendedTable);
     }
+
+    @Test
+    void sandbox(){
+        String test = "text";
+        int i = 999;
+        Object object = test;
+        object = i;
+        System.out.println("object = " + object);
+    }
 }
