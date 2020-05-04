@@ -2,6 +2,7 @@ package annotations.handlers.configuration;
 
 import annotations.Column;
 import annotations.Entity;
+import annotations.GeneratedValue;
 import annotations.Id;
 import annotations.Table;
 
@@ -9,7 +10,9 @@ import annotations.Table;
 @Table(name = "table_name")
 public class ExtendedEntity {
 
+
     @Id
+    @GeneratedValue
     @Column(name = "name_id")
     int nameId;
 

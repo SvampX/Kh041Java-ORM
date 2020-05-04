@@ -22,7 +22,7 @@ class EntityToTableParserTest {
     void initContext() {
         Reflections reflections = new Reflections(ExtendedEntity.class);
         EntityHandler.setReflections(reflections);
-        dbTables = EntityToTableMapper.parse();
+        dbTables = EntityToTableMapper.getTables();
         extendedColumnsNames = Set.of("name_id","user_name", "real_name", "java_object");
         extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
     }

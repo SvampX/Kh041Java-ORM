@@ -4,6 +4,8 @@ public final class Messages {
 
     public static final String ERR_CANNOT_INSERT_SEQUENCE = "Cannot insert current sequence into database";
 
+    public static final String ERR_CANNOT_DELETE_SEQUENCE = "Cannot delete current sequence into database";
+
     public static final String ERR_CANNOT_OBTAIN_GENERATED_VALUE =
             "Current field is not annotated with @GeneratedValue annotation";
 

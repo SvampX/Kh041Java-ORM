@@ -14,6 +14,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class GeneratedValueHandler {
+
+    public static final String MYSQL_DIALECT = "mysql";
+    public static final String POSTGRES_DIALECT = "postgresql";
+    public static final String ID = "ID ";
+    public static final String MYSQL_PRIMARY_KEY = " NOT NULL PRIMARY KEY AUTO_INCREMENT";
+    public static final String PRIMARY_KEY_DEFAULT_NEXTVAL = " NOT NULL PRIMARY KEY DEFAULT NEXTVAL";
+    public static final String OPEN_BRACKET = "('";
+    public static final String CLOSE_BRACKET = "')";
+    public static final String CREATE_SEQUENCE = "CREATE SEQUENCE ";
+    public static final String START_WITH = " START WITH ";
+    public static final String INCREMENT_BY = " INCREMENT BY ";
+    public static final String END_SEQ_NAME = "_id_seq";
+
     SequenceGenerator sequenceGenerator;
 
     public String createIdGenerator(DBColumn primaryKey, DBTable table) throws SQLException {
@@ -38,9 +51,9 @@ public class GeneratedValueHandler {
 
     private String generateAutoScript(Field idField, GeneratedValue generatedValue, DBTable table) throws SQLException {
         String dbDialect = ConnectionToDB.getInstance().getDialect();
-        if ("mysql".equalsIgnoreCase(dbDialect)) {
+        if (MYSQL_DIALECT.equalsIgnoreCase(dbDialect)) {
             return generateIdentityScript(idField);
-        } else if ("postgresql".equalsIgnoreCase(dbDialect)) {
+        } else if (POSTGRES_DIALECT.equalsIgnoreCase(dbDialect)) {
             return generateIdSequenceScript(idField, generatedValue, table);
         } else {
             throw new IllegalArgumentException(Messages.ERR_DB_DIALECT_IS_NOT_SUPPORTED);
@@ -50,7 +63,7 @@ public class GeneratedValueHandler {
     private String generateIdentityScript(Field field) {
         String type = getSqlIdType(field);
 
-        return "ID " + type + " NOT NULL PRIMARY KEY AUTO_INCREMENT";
+        return ID + type + MYSQL_PRIMARY_KEY;
     }
 
     private String generateIdSequenceScript(Field field, GeneratedValue generatedValue, DBTable table) {
@@ -64,21 +77,17 @@ public class GeneratedValueHandler {
             e.printStackTrace();
         }
 
-        return "ID " + type + " NOT NULL PRIMARY KEY " + "DEFAULT NEXTVAL('" +
-                getSequenceName(generatedValue, sequenceGenerator, table) + "')";
+        return ID + type + PRIMARY_KEY_DEFAULT_NEXTVAL + OPEN_BRACKET +
+                getSequenceName(generatedValue, sequenceGenerator, table) + CLOSE_BRACKET;
     }
 
     private void insertSequenceToDB(String sequenceScript) throws DBException {
         Connection connection;
         Statement statement;
-        boolean success;
         try {
             connection = ConnectionToDB.getInstance().getConnection();
             statement = connection.createStatement();
-            success = statement.execute(sequenceScript);
-            if (!success) {
-                throw new DataObtainingFailureException(Messages.ERR_CANNOT_INSERT_SEQUENCE);
-            }
+            statement.execute(sequenceScript);
         } catch (SQLException e) {
             throw new DBException(Messages.ERR_CANNOT_INSERT_SEQUENCE, e);
         }
@@ -89,13 +98,13 @@ public class GeneratedValueHandler {
         String sequenceScript;
         String sequenceName = getSequenceName(generatedValue, sequenceGenerator, table);
         if (hasGenerator(generatedValue)) {
-            sequenceScript = "CREATE SEQUENCE " + getSequenceName(generatedValue, sequenceGenerator, table);
+            sequenceScript = CREATE_SEQUENCE + getSequenceName(generatedValue, sequenceGenerator, table);
         } else {
             if (sequenceGenerator == null) {
                 throw new DataObtainingFailureException(Messages.ERR_CANNOT_OBTAIN_SEQUENCE_GENERATOR_CLASS);
             }
-            sequenceScript = "CREATE SEQUENCE " + sequenceName + " START WITH " + sequenceGenerator.initialValue() +
-                    " INCREMENT BY " + sequenceGenerator.allocationSize();
+            sequenceScript = CREATE_SEQUENCE + sequenceName + START_WITH + sequenceGenerator.initialValue() +
+                    INCREMENT_BY + sequenceGenerator.allocationSize();
         }
 
         return sequenceScript;
@@ -107,10 +116,10 @@ public class GeneratedValueHandler {
 
     private String getSequenceName(GeneratedValue generatedValue, SequenceGenerator sequenceGenerator, DBTable table) {
         if (hasGenerator(generatedValue)) {
-            return table.getName() + "_id_seq";
+            return table.getName() + END_SEQ_NAME;
         }
         if (sequenceGenerator.sequenceName().isEmpty()) {
-            return table.getName() + "_id_seq";
+            return table.getName() + END_SEQ_NAME;
         }
 
         return sequenceGenerator.sequenceName();

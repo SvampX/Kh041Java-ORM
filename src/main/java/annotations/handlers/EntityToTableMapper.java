@@ -19,6 +19,7 @@ public class EntityToTableMapper {
         EntityHandler.inspectEntities();
     }
     public static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    private static Set<DBTable> tables;
 
     private static Set<Field> getAnnotatedFields(Class<?> clazz, Class<? extends Annotation> annotation) {
         Set<Field> annotatedFields = new HashSet<>();
@@ -31,7 +32,15 @@ public class EntityToTableMapper {
         return annotatedFields;
     }
 
-    public static Set<DBTable> parse() {
+
+    public static Set<DBTable> getTables() {
+        if (tables == null) {
+            tables = mapTablesFromEntities();
+        }
+        return tables;
+    }
+
+    private static Set<DBTable> mapTablesFromEntities() {
         Set<DBTable> tables = new HashSet<>();
         Map<Class<?>, String> entitiesWithTableName = getEntitiesWithTableNames(entitiesSet);
         for (Class<?> clazz : entitiesSet) {
@@ -88,7 +97,7 @@ public class EntityToTableMapper {
         return dbColumns;
     }
 
-    private static Type getColumnType(Field field) {
+    protected static Type getColumnType(Field field) {
         String fieldType = field.getType().getSimpleName();
         switch (fieldType.toLowerCase()) {
             case "string":
