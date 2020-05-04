@@ -113,7 +113,7 @@ public class ManyToManyHandler {
             ManyToMany tmp;
             tmp = first;
             first = second;
-            second = first;
+            second = tmp;
         }
     }
 
