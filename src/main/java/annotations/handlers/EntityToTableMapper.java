@@ -32,8 +32,9 @@ public class EntityToTableMapper {
         return annotatedFields;
     }
 
+
     public static Set<DBTable> getTables() {
-        if(tables == null){
+        if (tables == null) {
             tables = mapTablesFromEntities();
         }
         return tables;

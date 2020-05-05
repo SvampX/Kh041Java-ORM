@@ -1,6 +1,10 @@
 package annotations.handlers.configuration;
 
-import annotations.*;
+import annotations.Column;
+import annotations.Entity;
+import annotations.GeneratedValue;
+import annotations.Id;
+import annotations.Table;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,8 +13,8 @@ import java.util.Set;
 @Table(name = "firstTable")
 public class ExtendedEntity {
 
-
     @Id
+    @GeneratedValue
     @Column(name = "name_id")
     int nameId;
 

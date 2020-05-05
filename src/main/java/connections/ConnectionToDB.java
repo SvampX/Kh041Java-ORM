@@ -104,8 +104,8 @@ public class ConnectionToDB {
         availableConList.add(con);
         unvailableConList.remove(con);
     }
-    public String getDriver(){
-       return driver.split("\\.")[1];
+    public String getDialect(){
+        return driver.split("\\.")[1];
     }
 }
 
