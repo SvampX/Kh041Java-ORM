@@ -1,10 +1,6 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.GeneratedValue;
-import annotations.Id;
-import annotations.Table;
+import annotations.*;
 
 import java.util.HashSet;
 import java.util.Set;
