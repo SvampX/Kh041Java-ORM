@@ -67,7 +67,7 @@ public class TablesInitializationTest {
                 "DROP TABLE IF EXISTS test CASCADE;";
         try {
             Statement statement = connection.createStatement();
-            statement.execute(dropTestTables);
+            //statement.execute(dropTestTables);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
