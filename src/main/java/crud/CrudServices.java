@@ -3,6 +3,8 @@ package crud;
 import annotations.handlers.DBColumn;
 import annotations.handlers.DBTable;
 import annotations.handlers.EntityToTableMapper;
+import annotations.handlers.ForeignKey;
+import annotations.handlers.RelationType;
 import annotations.handlers.Type;
 
 import java.sql.Connection;
@@ -59,9 +61,34 @@ public class CrudServices {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+            statement.execute(addForeignKeysWithOneRelation());
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
+    }
+
+    private String addForeignKeysWithOneRelation() {
+        StringBuilder alterForeignKeysQuery = new StringBuilder();
+        for (DBTable dbTable : tables) {
+            alterForeignKeysQuery.append(createAlterForeignKeyQuery(dbTable));
+        }
+        return alterForeignKeysQuery.toString();
+    }
+
+    private String createAlterForeignKeyQuery(DBTable dbTable) {
+        StringBuilder query = new StringBuilder();
+        for (ForeignKey foreignKey : dbTable.getForeignKeys()) {
+            if (foreignKey.getRelationType() == RelationType.ManyToMany) {
+                continue;
+            }
+            query.append("ALTER TABLE ").append(dbTable.getName())
+                    .append(" ADD FOREIGN KEY ")
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")")
+                    .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";");
+        }
+
+        return query.toString();
     }
 
     private String getSelectAllColumnsQuery(DBTable dbTable) {
