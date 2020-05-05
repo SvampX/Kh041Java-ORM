@@ -33,28 +33,9 @@ public class ConnectionToDB {
     }
 
     private ConnectionToDB() throws SQLException {
-//        initContext();
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }
-
-//    public static void initContext() {
-//        StackTraceElement e[] = Thread.currentThread().getStackTrace();
-//        String callingClassName = e[4].getClassName();
-//        System.out.println(callingClassName);
-//        try {
-//            Class clazz = Class.forName(callingClassName);
-//        } catch (ClassNotFoundException classNotFoundException) {
-//            classNotFoundException.printStackTrace();
-//        }
-//        Reflections reflections;
-//        try {
-//            reflections = new Reflections(Class.forName("annotations.handlers.EntityToTableMapperTest"));
-//            EntityHandler.setReflections(reflections);
-//        } catch (ClassNotFoundException ex) {
-//            ex.printStackTrace();
-//        }
-//    }
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;

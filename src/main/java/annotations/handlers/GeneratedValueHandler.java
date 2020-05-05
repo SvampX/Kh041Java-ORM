@@ -30,7 +30,6 @@ public class GeneratedValueHandler {
     SequenceGenerator sequenceGenerator;
 
     public String createIdGenerator(DBTable table) throws SQLException {
-        String idScript = null;
         Field idField = table.getPrimaryKey().getField();
 
         GeneratedValue generatedValue = idField.getAnnotation(GeneratedValue.class);
@@ -39,24 +38,27 @@ public class GeneratedValueHandler {
         }
 
         GenerationType generationType = generatedValue.strategy();
-        if (generationType == GenerationType.IDENTITY) {
-            idScript = generateIdentityScript(idField);
-        } else if (generationType == GenerationType.SEQUENCE) {
-            idScript = generateIdSequenceScript(idField, generatedValue, table);
-        } else if (generationType == GenerationType.AUTO) {
-            idScript = generateAutoScript(idField, generatedValue, table);
+        switch (generationType) {
+            case IDENTITY:
+                return generateIdentityScript(idField);
+            case SEQUENCE:
+                return generateIdSequenceScript(idField, generatedValue, table);
+            case AUTO:
+            default:
+                return generateAutoScript(idField, generatedValue, table);
         }
-        return idScript;
     }
 
     private String generateAutoScript(Field idField, GeneratedValue generatedValue, DBTable table) throws SQLException {
-        String dbDialect = ConnectionToDB.getInstance().getDialect();
-        if (MYSQL_DIALECT.equalsIgnoreCase(dbDialect)) {
-            return generateIdentityScript(idField);
-        } else if (POSTGRES_DIALECT.equalsIgnoreCase(dbDialect)) {
-            return generateIdSequenceScript(idField, generatedValue, table);
-        } else {
-            throw new IllegalArgumentException(Messages.ERR_DB_DIALECT_IS_NOT_SUPPORTED);
+        String dbDialect = ConnectionToDB.getInstance().getDialect().toLowerCase();
+
+        switch (dbDialect) {
+            case MYSQL_DIALECT:
+                return generateIdentityScript(idField);
+            case POSTGRES_DIALECT:
+                return generateIdSequenceScript(idField, generatedValue, table);
+            default:
+                throw new IllegalArgumentException(Messages.ERR_DB_DIALECT_IS_NOT_SUPPORTED);
         }
     }
 

@@ -5,12 +5,8 @@ import annotations.Entity;
 import annotations.GeneratedValue;
 import annotations.GenerationType;
 import annotations.Id;
-//import annotations.OneToMany;
-//import annotations.OneToOne;
 import annotations.SequenceGenerator;
 import annotations.Table;
-
-import java.util.List;
 
 /**
  * This class created for testing purpose
@@ -34,11 +30,6 @@ public class User {
     @Column(name = "age")
     private int age;
 
-//    @OneToOne
-//    private Phone phone;
-//
-//    @OneToMany(mappedBy = "userDetails")
-//    private List<Address> addresses;
 
     public int getId() {
         return id;
