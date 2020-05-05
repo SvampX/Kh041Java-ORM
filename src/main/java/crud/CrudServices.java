@@ -12,63 +12,67 @@ import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CrudServices {
     Set<DBTable> tables = EntityToTableMapper.getTables();
-    Map<Class, ExistingQuery> queryWithTypesList = new HashMap<>();
+    Connection connection;
 
-    //Tables definition section
+    //TODO Tables definition section
 
     private String getTablesDefineQuery() {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder tablesDefineQuery = new StringBuilder();
         for (DBTable dbc : tables) {
-            builder.append(prepareTableQuery(dbc));
+            tablesDefineQuery.append(prepareTableQuery(dbc));
         }
-        return builder.toString();
+        return tablesDefineQuery.toString();
     }
 
     private StringBuilder prepareTableQuery(DBTable dbTable) {
-        boolean hasPrimaryKey = dbTable.getPrimaryKey().getField() != null;
-        StringBuilder builder = new StringBuilder();
+        boolean hasPrimaryKey = dbTable.getPrimaryKey() != null;
+        StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
-        builder.append("CREATE TABLE ").
+        singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");
         if (hasPrimaryKey) {
-            builder.append(dbTable.getPrimaryKey().getName()).
+            singleTableQuery.append(dbTable.getPrimaryKey().getName()).
                     append(" SERIAL4 PRIMARY KEY,\n");
         }
-        builder.append(getColumnsDefinition(dbTable.getColumnSet()));
-        return builder;
+        singleTableQuery.append(getColumnsDefinition(dbTable.getColumnSet()));
+        return singleTableQuery;
     }
 
     private StringBuilder getColumnsDefinition(Set<DBColumn> dbColumns) {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder columnsDefinition = new StringBuilder();
         for (DBColumn dbc : dbColumns) {
-            builder.append(dbc.getName()).
+            columnsDefinition.append(dbc.getName()).
                     append(" ");
             if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
-                builder.append("VARCHAR (").
+                columnsDefinition.append("VARCHAR (").
                         append(dbc.getSize()).
                         append("),\n");
             } else {
-                builder.append(dbc.getType().getSqlType()).
+                columnsDefinition.append(dbc.getType().getSqlType()).
                         append(",\n");
             }
         }
-        builder.delete(builder.length() - 2, builder.length());
-        builder.append(");\n");
-        return builder;
+        columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
+        columnsDefinition.append(");\n");
+        return columnsDefinition;
     }
 
     public void initTables(Connection connection) {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
@@ -76,34 +80,120 @@ public class CrudServices {
 
     //TODO Read processing section
 
-    public Object readEntityById(Object id, Object entity) {
-        Class<?> clazz = entity.getClass();
+    public Object readEntityById(Object id, Class<?> clazz) {
         isEntityCheck(clazz);
-        DBTable table = getTableByClass(clazz);
-        assert table != null;
-        String preparedQuery =  createSelectAllByPrimaryKeyQuery(table);
-
-
+        Object entity = null;
+        try {
+            entity = clazz.getConstructor().newInstance();
+            DBTable table = getTableByClass(clazz);
+            assert table != null;
+            String preparedQuery = createSelectAllByPrimaryKeyQuery(table);
+            PreparedStatement preparedStatement = connection.prepareStatement(preparedQuery);
+            if (id instanceof Integer) {
+                preparedStatement.setInt(1, (Integer) id);
+            } else {
+                preparedStatement.setLong(1, (Long) id);
+            }
+            ResultSet rs = preparedStatement.executeQuery();
+            fillObjectSimpleFields(entity, table, rs);
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException | SQLException e) {
+            e.printStackTrace();
+        }
         return entity;
     }
 
-//    public Object readEntityByPartialInitializedInstance(Object object) throws IllegalAccessException, DBException {
-//        Class<?> clazz = object.getClass();
-//        isEntityCheck(clazz);
-//        String tableName = getTableNameByClass(clazz);
-//        DBTable table = getTableByClass(clazz);
-//        Map<String, Object> columns = new HashMap<>();
-//        for (Field f : clazz.getDeclaredFields()) {
-//            if (f.isAnnotationPresent(Column.class)) {
-//                f.setAccessible(true);
-//                columns.put(getColumnName(f), f.get(object));
-//            }
-//        }
-//
-//        //TODO
-//
-//        return object;
-//    }
+    private void fillObjectSimpleFields(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
+        boolean hasPrimaryKey = table.getPrimaryKey() != null;
+        DBColumn currentColumn;
+        int i = 0;
+        while (rs.next()) {
+            if (hasPrimaryKey) {
+                fillPrimaryKeyField(entity, table, rs);
+                hasPrimaryKey = false;
+                i++;
+            }
+            for (DBColumn dbColumn : table.getColumnSet()) {
+                fillSimpleField(entity, dbColumn, rs);
+            }
+        }
+    }
+
+    private void fillPrimaryKeyField(Object entity, DBTable table, ResultSet rs) throws IllegalAccessException, SQLException {
+        String pkType = table.getPrimaryKey().getField().getType().getSimpleName();
+        String pkName = table.getPrimaryKey().getName();
+        if (pkType.equals("Integer") || pkType.equals("int")) {
+            table.getPrimaryKey().getField().setInt(entity, rs.getInt(pkName));
+        } else {
+            if (pkType.toLowerCase().equals("long")) {
+                table.getPrimaryKey().getField().setLong(entity, rs.getLong(pkName));
+            } else {
+                throw new IllegalStateException("Primary key should be Integer(int) or Long(long) type");
+            }
+        }
+    }
+
+    private void fillSimpleField(Object entity, DBColumn dbColumn, ResultSet rs) throws IllegalAccessException, SQLException {
+        Field entityField = dbColumn.getField();
+        String fieldType = entityField.getType().getSimpleName();
+        String columnName = dbColumn.getName();
+        switch (fieldType.toLowerCase()) {
+            case "string":
+                entityField.set(entity, rs.getString(columnName));
+                break;
+            case "integer":
+            case "int":
+                entityField.set(entity, rs.getInt(columnName));
+                break;
+            case "short":
+                entityField.set(entity, rs.getShort(columnName));
+                break;
+            case "float":
+                entityField.set(entity, rs.getFloat(columnName));
+                break;
+            case "double":
+                entityField.set(entity, rs.getDouble(columnName));
+                break;
+            case "bigdecimal":
+                entityField.set(entity, rs.getBigDecimal(columnName));
+                break;
+            case "char":
+            case "character":
+                entityField.set(entity, rs.getString(columnName).charAt(0));
+                break;
+            case "boolean":
+                entityField.set(entity, rs.getBoolean(columnName));
+                break;
+            default:
+                entityField.set(entity, rs.getObject(columnName));
+        }
+    }
+
+    public Object readEntityByPartialInitializedInstance(Object object) throws IllegalAccessException, DBException {
+        Class<?> clazz = object.getClass();
+        isEntityCheck(clazz);
+        Set<Field> notNullFields = Arrays.stream(clazz.getDeclaredFields()).
+                filter(field -> {
+                    try {
+                        return field.get(new Object()) == null;
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }).collect(Collectors.toSet());
+
+        DBTable table = getTableByClass(clazz);
+        Map<String, Object> columns = new HashMap<>();
+        for (Field f : clazz.getDeclaredFields()) {
+            if (f.isAnnotationPresent(Column.class)) {
+                f.setAccessible(true);
+                columns.put(getColumnName(f), f.get(object));
+            }
+        }
+
+        //TODO
+
+        return object;
+    }
 
     private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
         StringBuilder builder = new StringBuilder();
@@ -221,5 +311,7 @@ public class CrudServices {
         }
     }
 
-
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
 }

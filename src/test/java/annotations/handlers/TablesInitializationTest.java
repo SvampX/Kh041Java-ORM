@@ -3,6 +3,7 @@ package annotations.handlers;
 import annotations.handlers.configuration.ExtendedEntity;
 import connections.ConnectionToDB;
 import crud.CrudServices;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -12,24 +13,20 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Set;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TablesInitializationTest {
     private static Connection connection;
     private static DBTable tableToCreate;
+    private static Set<DBTable> tables;
 
     @BeforeAll
     void init() {
         tableToCreate = new DBTable();
         Reflections reflections = new Reflections(ExtendedEntity.class);
         EntityHandler.setReflections(reflections);
-        EntityToTableMapper.getTables().
-                stream().
-                filter(dbTable -> dbTable.getName().equals("1stTable")).
-                peek(dbTable -> tableToCreate.setPrimaryKey(dbTable.getPrimaryKey())).
-                map(DBTable::getColumnSet).
-                forEach(tableToCreate::setColumnSet);
-        tableToCreate.setName("create_table_test");
+        tables = EntityToTableMapper.getTables();
         ConnectionToDB connectionToDB;
         try {
             connectionToDB = ConnectionToDB.getInstance();
@@ -54,7 +51,7 @@ public class TablesInitializationTest {
     }
 
     @Test
-    void TableCreationTest() {
+    public void tableCreationTest() {
         CrudServices crudServices = new CrudServices();
         crudServices.initTables(connection);
 
@@ -65,9 +62,14 @@ public class TablesInitializationTest {
                 "DROP TABLE IF EXISTS secondTable; ";
         try {
             Statement statement = connection.createStatement();
-            //statement.execute(dropTestTables);
+            statement.execute(dropTestTables);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
+    }
+    @AfterAll
+    public void eraseTables() {
+        StringBuilder dropTablesQuery = new StringBuilder();
+
     }
 }

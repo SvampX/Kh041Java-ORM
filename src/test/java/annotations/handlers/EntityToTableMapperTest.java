@@ -23,7 +23,7 @@ class EntityToTableMapperTest {
     @BeforeAll
     void initContext() {
         try {
-            ConnectionToDB contextInitPoint= ConnectionToDB.getInstance();
+            ConnectionToDB contextInitPoint = ConnectionToDB.getInstance();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -70,7 +70,7 @@ class EntityToTableMapperTest {
     }
 
     @Test
-    void sandbox(){
+    void sandbox() {
         String test = "text";
         int i = 999;
         Object object = test;
