@@ -1,18 +1,23 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.Id;
+import annotations.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
+@Table(name = "secondTable")
 public class SimpleEntity {
 
     @Id
-    @Column
+    @Column(name = "id")
     int nameId;
 
     @Column
     String userName;
+
+    @ManyToMany(tableName = "test", inverseJoinColumnsName = "secondId", inverseJoinColumnsReferencedName = "id")
+    Set<ExtendedEntity> extendedEntities = new HashSet<>();
 
     public SimpleEntity() {
     }

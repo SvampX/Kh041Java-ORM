@@ -6,6 +6,7 @@ public class DBColumn {
     private Field field;
     private String name;
     private Type type;
+    private int size;
 
     public DBColumn() {
     }
@@ -32,6 +33,14 @@ public class DBColumn {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 
     @Override

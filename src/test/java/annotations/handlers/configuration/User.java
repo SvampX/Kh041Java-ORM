@@ -1,18 +1,25 @@
-package annotations.handlers;
+package annotations.handlers.configuration;
 
 import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
+import annotations.Id;
+import annotations.OneToMany;
+import annotations.OneToOne;
 import annotations.Table;
+
+import java.util.List;
 
 /**
  * This class created for testing purpose
  */
 @Entity
-@Table(name = "users")
+@Table(name = "test_users")
 public class User {
 
+    @Id
     @GeneratedValue
+    @Column(name = "user_id")
     private int id;
 
     @Column(name = "first_name")
@@ -21,8 +28,17 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column
+    @Column(name = "age")
     private int age;
+
+    @OneToOne
+    private Phone phone;
+
+    @OneToMany(mappedBy = "userDetails")
+    private List<Address> addresses;
+
+    public User() {
+    }
 
     public int getId() {
         return id;
