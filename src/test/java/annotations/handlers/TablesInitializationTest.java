@@ -29,6 +29,7 @@ public class TablesInitializationTest {
                 peek(dbTable -> tableToCreate.setPrimaryKey(dbTable.getPrimaryKey())).
                 map(DBTable::getColumnSet).
                 forEach(tableToCreate::setColumnSet);
+        ManyToManyHandler.getRelationTables();
         tableToCreate.setName("create_table_test");
         ConnectionToDB connectionToDB;
         try {
@@ -59,10 +60,11 @@ public class TablesInitializationTest {
         crudServices.initTables(connection);
 
         String dropTestTables = "DROP TABLE IF EXISTS test_users;\n" +
-                "DROP TABLE IF EXISTS firstTable;\n" +
+                "DROP TABLE IF EXISTS firstTable CASCADE ;\n" +
                 "DROP TABLE IF EXISTS phones;\n" +
                 "DROP TABLE IF EXISTS addresses; \n" +
-                "DROP TABLE IF EXISTS secondTable; ";
+                "DROP TABLE IF EXISTS secondTable CASCADE ; \n" +
+                "DROP TABLE IF EXISTS test CASCADE;";
         try {
             Statement statement = connection.createStatement();
             //statement.execute(dropTestTables);
