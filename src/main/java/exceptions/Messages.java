@@ -17,4 +17,7 @@ public final class Messages {
                     "@SequenceGenerator annotation to determine generator for sequence";
 
     public static final String ERR_DB_DIALECT_IS_NOT_SUPPORTED = "This database dialect is not supported";
+    public static final String ERR_CANNOT_OBTAIN_ENTITY_CLASS = " must be annotated with @Entity";
+
+    public static final String ERR_CANNOT_OBTAIN_DBTABLE = "Such table is not exist";
 }

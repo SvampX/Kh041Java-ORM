@@ -47,7 +47,7 @@ public class EntityToTableMapper {
             DBTable table = new DBTable();
             table.setName(entitiesWithTableName.get(clazz));
             table.setPrimaryKey(getPrimaryKey(clazz));
-            table.setColumnSet(getColumns(clazz));
+            table.setColumnSet(getColumns(clazz, table.getPrimaryKey()));
             table.setMyEntityClass(clazz);
             tables.add(table);
         }
@@ -56,19 +56,26 @@ public class EntityToTableMapper {
 
     private static Map<Class<?>, String> getEntitiesWithTableNames(Set<Class<?>> entities) {
         Map<Class<?>, String> entityTableRelation = new HashMap<>();
+        String name = "";
         for (Class<?> clazz : entities) {
             if (clazz.isAnnotationPresent(Table.class)) {
-                entityTableRelation.put(clazz, clazz.getAnnotation(Table.class).name());
+                name = clazz.getAnnotation(Table.class).name();
             } else {
-                entityTableRelation.put(clazz, clazz.getAnnotation(Entity.class).name());
+                name = clazz.getAnnotation(Entity.class).name();
+            }
+            if (name.isEmpty()) {
+                entityTableRelation.put(clazz, clazz.getSimpleName());
+            } else {
+                entityTableRelation.put(clazz, name);
             }
         }
         return entityTableRelation;
     }
 
-    private static Set<DBColumn> getColumns(Class<?> entity) {
+    private static Set<DBColumn> getColumns(Class<?> entity, DBColumn pk) {
         Set<DBColumn> dbColumns;
         Set<Field> fields = getAnnotatedFields(entity, Column.class);
+        fields.remove(pk.getField());
         dbColumns = collectDBColumnsFromFields(fields);
         return dbColumns;
     }
@@ -76,19 +83,35 @@ public class EntityToTableMapper {
     private static DBColumn getPrimaryKey(Class<?> entity) {
         DBColumn pk = new DBColumn();
         Set<Field> primaryFields = getAnnotatedFields(entity, Id.class);
-        if (primaryFields.size() > 1)
+        if (primaryFields.size() > 1) {
             throw new IllegalStateException("In Entity couldn't be more than 1 Primary Key");
-        pk.setField(primaryFields.iterator().next());
-        pk.setName(primaryFields.iterator().next().getAnnotation(Column.class).name());
+        }
+        Field primaryField = primaryFields.iterator().next();
+        pk.setField(primaryField);
+        String name = "id";
+        if (primaryField.isAnnotationPresent(Column.class)) {
+            Column column = primaryField.getAnnotation(Column.class);
+            if (!column.name().isEmpty()) {
+                name = column.name();
+            }
+        }
+        pk.setName(name);
         return pk;
     }
 
     private static Set<DBColumn> collectDBColumnsFromFields(Set<Field> fieldSet) {
+        Column column;
         Set<DBColumn> dbColumns = new HashSet<>();
         for (Field f : fieldSet) {
             DBColumn dbColumn = new DBColumn();
             if (f.isAnnotationPresent(Column.class)) {
-                dbColumn.setName(f.getAnnotation(Column.class).name());
+                column = f.getAnnotation(Column.class);
+                String name = f.getName();
+                if (!column.name().isEmpty()) {
+                    name = column.name();
+                }
+                dbColumn.setName(name);
+                dbColumn.setSize(column.length());
             }
             dbColumn.setField(f);
             dbColumn.setType(getColumnType(f));
@@ -103,20 +126,20 @@ public class EntityToTableMapper {
             case "string":
                 return Type.STRING;
             case "integer":
-            case "int" :
+            case "int":
                 return Type.INTEGER;
-            case "short" :
+            case "short":
                 return Type.SHORT;
-            case "float" :
+            case "float":
                 return Type.FLOAT;
-            case  "double" :
+            case "double":
                 return Type.DOUBLE;
-            case "bigdecimal" :
+            case "bigdecimal":
                 return Type.BIGDECIMAL;
             case "char":
-            case "character" :
+            case "character":
                 return Type.CHARACTER;
-            case "boolean" :
+            case "boolean":
                 return Type.BOOLEAN;
             default:
                 return Type.OTHER;

@@ -3,21 +3,22 @@ package annotations.handlers.configuration;
 import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
-import annotations.GenerationType;
 import annotations.Id;
-import annotations.SequenceGenerator;
+import annotations.OneToMany;
+import annotations.OneToOne;
 import annotations.Table;
+
+import java.util.List;
 
 /**
  * This class created for testing purpose
  */
 @Entity
-@Table(name = "users")
+@Table(name = "test_users")
 public class User {
 
     @Id
-    @SequenceGenerator(name = "user_gen", sequenceName = "user_gen_seq", initialValue = 5, allocationSize = 2)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_gen")
+    @GeneratedValue
     @Column(name = "user_id")
     private int id;
 
@@ -30,6 +31,14 @@ public class User {
     @Column(name = "age")
     private int age;
 
+    @OneToOne
+    private Phone phone;
+
+    @OneToMany(mappedBy = "userDetails")
+    private List<Address> addresses;
+
+    public User() {
+    }
 
     public int getId() {
         return id;

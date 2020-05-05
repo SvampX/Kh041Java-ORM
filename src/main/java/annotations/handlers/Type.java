@@ -9,8 +9,8 @@ public enum Type {
     DOUBLE("DOUBLE"),
     BIGDECIMAL("NUMERIC"),
     CHARACTER("CHAR(1)"),
-    BOOLEAN("BIT"),
-    OTHER("VARBINARY");
+    BOOLEAN("BOOLEAN"),
+    OTHER("BYTEA");
     private String sqlType;
 
     Type(String sqlType) {

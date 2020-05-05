@@ -2,8 +2,8 @@ package annotations.handlers;
 
 import annotations.GeneratedValue;
 import annotations.GenerationType;
-import annotations.SequenceGenerator;
 import connections.ConnectionToDB;
+import annotations.SequenceGenerator;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;

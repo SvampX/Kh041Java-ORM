@@ -1,7 +1,6 @@
 package annotations.handlers;
 
-import annotations.Id;
-
+import java.util.HashSet;
 import java.util.Set;
 
 public class DBTable {
@@ -9,7 +8,8 @@ public class DBTable {
     private Set<DBColumn> columnSet;
     private DBColumn primaryKey;
     private Class<?> myEntityClass;
-    private Id idAnnotation;
+    private DBColumn joinColumn;
+    private Set<ForeignKey> foreignKeys = new HashSet<>();
 
     public DBTable() {
     }
@@ -44,6 +44,22 @@ public class DBTable {
 
     public void setMyEntityClass(Class<?> myEntityClass) {
         this.myEntityClass = myEntityClass;
+    }
+
+    public DBColumn getJoinColumn() {
+        return joinColumn;
+    }
+
+    public void setJoinColumn(DBColumn joinColumn) {
+        this.joinColumn = joinColumn;
+    }
+
+    public Set<ForeignKey> getForeignKeys() {
+        return foreignKeys;
+    }
+
+    public void setForeignKeys(Set<ForeignKey> foreignKeys) {
+        this.foreignKeys = foreignKeys;
     }
 
     @Override

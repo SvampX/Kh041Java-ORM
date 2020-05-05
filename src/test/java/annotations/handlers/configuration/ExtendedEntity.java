@@ -6,10 +6,12 @@ import annotations.GeneratedValue;
 import annotations.Id;
 import annotations.Table;
 
-@Entity(name = "EntityName")
-@Table(name = "table_name")
-public class ExtendedEntity {
+import java.util.HashSet;
+import java.util.Set;
 
+@Entity(name = "EntityName")
+@Table(name = "firstTable")
+public class ExtendedEntity {
 
     @Id
     @GeneratedValue
@@ -24,6 +26,9 @@ public class ExtendedEntity {
 
     @Column(name = "java_object")
     SimpleEntity simpleEntity;
+
+    @ManyToMany(tableName = "test", joinColumnsName = "firstId", joinColumnsReferencedName = "name_id")
+    Set<SimpleEntity> simpleEntities = new HashSet<>();
 
     public ExtendedEntity() {
     }
