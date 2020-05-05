@@ -67,7 +67,6 @@ public class ManyToManyHandler {
         originTable.getForeignKeys().add(switchColumnsInKey(fk1, relationTable));
         secondOriginTable.getForeignKeys().add(switchColumnsInKey(fk2, relationTable));
 
-        //EntityToTableMapper.getTables().add(relationTable);
         relationTables.add(relationTable);
     }
 
@@ -166,6 +165,9 @@ public class ManyToManyHandler {
     }
 
     public static List<DBTable> getRelationTables() {
+        if(relationTables.size() < 1){
+            createJoinTables();
+        }
         return relationTables;
     }
 }
