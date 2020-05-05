@@ -12,6 +12,7 @@ public class ManyToManyHandler {
     private final static Map<ManyToMany, DBTable> manyToManyTableMap = new HashMap<>();
     private final static Map<ManyToMany, Field> manyToManyFieldMap = new HashMap<>();
     private final static Map<ManyToMany, DBColumn> manyToManyReferencedColumnMap = new HashMap<>();
+    private final static List<DBTable> relationTables = new ArrayList<>();
 
     private static void findMtmAnnotInEntities() {
 
@@ -66,7 +67,8 @@ public class ManyToManyHandler {
         originTable.getForeignKeys().add(switchColumnsInKey(fk1, relationTable));
         secondOriginTable.getForeignKeys().add(switchColumnsInKey(fk2, relationTable));
 
-        EntityToTableMapper.getTables().add(relationTable);
+        //EntityToTableMapper.getTables().add(relationTable);
+        relationTables.add(relationTable);
     }
 
     private static ForeignKey switchColumnsInKey(ForeignKey key, DBTable dbTable) {
@@ -161,5 +163,9 @@ public class ManyToManyHandler {
 
     public static Map<ManyToMany, Field> getManyToManyFieldMap() {
         return manyToManyFieldMap;
+    }
+
+    public static List<DBTable> getRelationTables() {
+        return relationTables;
     }
 }

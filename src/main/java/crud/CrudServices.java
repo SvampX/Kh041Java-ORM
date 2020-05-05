@@ -1,9 +1,6 @@
 package crud;
 
-import annotations.handlers.DBColumn;
-import annotations.handlers.DBTable;
-import annotations.handlers.EntityToTableMapper;
-import annotations.handlers.Type;
+import annotations.handlers.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -59,11 +56,41 @@ public class CrudServices {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+            statement.execute(getJoinTablesDefineQuery());
+            statement.execute(addManyToManyForeignKeys());
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
     }
+    private String getJoinTablesDefineQuery(){
+        StringBuilder builder = new StringBuilder();
+        for (DBTable dbc : ManyToManyHandler.getRelationTables()) {
+            builder.append(prepareTableQuery(dbc));
+        }
+        return builder.toString();
+    }
+    private String addManyToManyForeignKeys(){
+        StringBuilder builder = new StringBuilder();
+        for (DBTable dbc : tables) {
+            for(ForeignKey fk : dbc.getForeignKeys()){
+                if(fk.isHasRelationsTable()){
+                    builder.append("ALTER TABLE" + dbc.getName() + "\n" +
+                            "ADD FOREIGN KEY" + "(" + fk.getMyTableKey().getName() + ")" + "REFERENCES" +
+                            fk.getOtherTable().getName()+"(" + fk.getOtherTableKey() + ")" + "\n");
 
+                    for( ForeignKey relationTableKey : fk.getOtherTable().getForeignKeys()){
+                        if(relationTableKey.getOtherTable() == dbc){
+                            DBTable relationTable = fk.getOtherTable();
+                            builder.append("ALTER TABLE" + relationTable.getName() + "\n" +
+                                    "ADD FOREIGN KEY" + "(" + relationTableKey.getMyTableKey().getName() + ")" + "REFERENCES" +
+                                    dbc.getName() +"(" + relationTableKey.getOtherTableKey() + ")" + "\n");
+                        }
+                    }
+                }
+            }
+        }
+        return builder.toString();
+    }
     private String getSelectAllColumnsQuery(DBTable dbTable) {
         StringBuilder builder = new StringBuilder();
         builder.append("SELECT * FROM ").append(dbTable.getName()).
