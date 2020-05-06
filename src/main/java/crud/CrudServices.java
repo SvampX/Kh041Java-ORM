@@ -170,7 +170,7 @@ public class CrudServices {
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");
-        singleTableQuery.append(getColumnsDefinition(dbTable.getColumnSet()));
+        singleTableQuery.append(getColumnsDefinition(dbTable));
         singleTableQuery.delete(singleTableQuery.length() - 3, singleTableQuery.length());
         singleTableQuery.append(",");
         singleTableQuery.append(getRelationTablePrimaryKey(dbTable.getColumnSet()));
