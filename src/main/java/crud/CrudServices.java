@@ -79,55 +79,25 @@ public class CrudServices {
     private String getJoinTablesDefineQuery() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : ManyToManyHandler.getRelationTables()) {
-            builder.append(prepareJoinTableQuery(dbc));
+            builder.append(prepareTableQuery(dbc));
         }
         return builder.toString();
     }
 
-    private StringBuilder prepareJoinTableQuery(DBTable dbTable) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("CREATE TABLE ").
-                append(dbTable.getName()).
-                append(" (\n");
-        builder.append(getJoinTableColumnsDefinition(dbTable.getColumnSet()));
-        return builder;
-    }
 
-    private StringBuilder getJoinTableColumnsDefinition(Set<DBColumn> dbColumns) {
-        StringBuilder builder = new StringBuilder();
-        for (DBColumn dbc : dbColumns) {
-            builder.append(dbc.getName()).
-                    append(" ");
-            if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
-                builder.append("VARCHAR (").
-                        append(dbc.getSize()).
-                        append(") UNIQUE,\n");
-            } else {
-                builder.append(dbc.getType().getSqlType()).
-                        append(" UNIQUE,\n");
-            }
-        }
-        builder.delete(builder.length() - 2, builder.length());
-        builder.append(");\n");
-        return builder;
-    }
 
     private String addManyToManyForeignKeys() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : tables) {
             for (ForeignKey fk : dbc.getForeignKeys()) {
-                createCrossForeignKeys(builder, dbc, fk);
+                createForeignKey(builder, dbc, fk);
             }
         }
         return builder.toString();
     }
 
-    private void createCrossForeignKeys(StringBuilder builder, DBTable dbc, ForeignKey fk) {
+    private void createForeignKey(StringBuilder builder, DBTable dbc, ForeignKey fk) {
         if (fk.isHasRelationsTable()) {
-            builder.append("ALTER TABLE " + dbc.getName() + "\n" +
-                    " ADD FOREIGN KEY " + "(" + fk.getMyTableKey().getName() + ")" + " REFERENCES " +
-                    fk.getOtherTable().getName() + "(" + fk.getOtherTableKey().getName() + ");" + "\n");
-
             for (ForeignKey relationTableKey : fk.getOtherTable().getForeignKeys()) {
                 if (relationTableKey.getOtherTable() == dbc) {
                     DBTable relationTable = fk.getOtherTable();
