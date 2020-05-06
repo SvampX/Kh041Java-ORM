@@ -29,6 +29,8 @@ public class TablesInitializationTest {
                 peek(dbTable -> tableToCreate.setPrimaryKey(dbTable.getPrimaryKey())).
                 map(DBTable::getColumnSet).
                 forEach(tableToCreate::setColumnSet);
+        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
         ManyToManyHandler.getRelationTables();
         tableToCreate.setName("create_table_test");
         ConnectionToDB connectionToDB;
@@ -67,7 +69,7 @@ public class TablesInitializationTest {
                 "DROP TABLE IF EXISTS test CASCADE;";
         try {
             Statement statement = connection.createStatement();
-            //statement.execute(dropTestTables);
+//            statement.execute(dropTestTables);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }

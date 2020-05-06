@@ -19,6 +19,8 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class CrudServices {
@@ -46,13 +48,13 @@ public class CrudServices {
             builder.append(dbTable.getPrimaryKey().getName()).
                     append(" SERIAL4 PRIMARY KEY,\n");
         }
-        builder.append(getColumnsDefinition(dbTable.getColumnSet()));
+        builder.append(getColumnsDefinition(dbTable));
         return builder;
     }
 
-    private StringBuilder getColumnsDefinition(Set<DBColumn> dbColumns) {
+    private StringBuilder getColumnsDefinition(DBTable dbTable) {
         StringBuilder builder = new StringBuilder();
-        for (DBColumn dbc : dbColumns) {
+        for (DBColumn dbc : dbTable.getColumnSet()) {
             builder.append(dbc.getName()).
                     append(" ");
             if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
@@ -64,9 +66,19 @@ public class CrudServices {
                         append(",\n");
             }
         }
-        builder.delete(builder.length() - 2, builder.length());
+        if (dbTable.getJoinColumn() == null) {
+            builder.delete(builder.length() - 2, builder.length());
+        } else {
+            builder.append(getJoinColumnDefinition(dbTable));
+        }
         builder.append(");\n");
         return builder;
+    }
+
+    private String getJoinColumnDefinition(DBTable dbTable) {
+        DBColumn joinColumn = dbTable.getJoinColumn();
+
+        return joinColumn.getName() + " " + joinColumn.getType().getSqlType();
     }
 
     public void initTables(Connection connection) {
@@ -84,6 +96,9 @@ public class CrudServices {
     private String addForeignKeysWithOneRelation() {
         StringBuilder alterForeignKeysQuery = new StringBuilder();
         for (DBTable dbTable : tables) {
+            if (dbTable.getJoinColumn() == null) {
+                continue;
+            }
             alterForeignKeysQuery.append(createAlterForeignKeyQuery(dbTable));
         }
         return alterForeignKeysQuery.toString();
@@ -97,9 +112,9 @@ public class CrudServices {
             }
             query.append("ALTER TABLE ").append(dbTable.getName())
                     .append(" ADD FOREIGN KEY ")
-                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")")
+                    .append("(").append(dbTable.getJoinColumn().getName()).append(")")
                     .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
-                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";");
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";\n");
         }
 
         return query.toString();
@@ -169,20 +184,20 @@ public class CrudServices {
         }
     }
 
-    private String getSelectAllColumnsQuery(DBTable dbTable) {
+//    private String getSelectAllColumnsQuery(DBTable dbTable) {
 
-    //TODO Read processing section
+        //TODO Read processing section
 
-    public Object readEntityById(Object id, Object entity) {
-        Class<?> clazz = entity.getClass();
-        isEntityCheck(clazz);
-        DBTable table = getTableByClass(clazz);
-        assert table != null;
-        String preparedQuery =  createSelectAllByPrimaryKeyQuery(table);
-
-
-        return entity;
-    }
+//    public Object readEntityById(Object id, Object entity) {
+//        Class<?> clazz = entity.getClass();
+//        isEntityCheck(clazz);
+//        DBTable table = getTableByClass(clazz);
+//        assert table != null;
+//        String preparedQuery =  createSelectAllByPrimaryKeyQuery(table);
+//
+//
+//        return entity;
+//    }
 
 //    public Object readEntityByPartialInitializedInstance(Object object) throws IllegalAccessException, DBException {
 //        Class<?> clazz = object.getClass();
@@ -202,51 +217,51 @@ public class CrudServices {
 //        return object;
 //    }
 
-    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("SELECT * FROM ").
-                append(dbTable.getName()).
-                append(" WHERE ").
-                append(dbTable.getPrimaryKey().getName()).
-                append(" = ? ;");
-        return builder.toString();
-    }
-
-    private String getColumnName(Field field) {
-        Column column = field.getAnnotation(Column.class);
-        String name = field.getName();
-        if (!column.name().isEmpty()) {
-            name = column.name();
-        }
-        return name;
-    }
-
-    private String createSelectQuery(Map<String, Object> columns, String table) {
-        StringBuilder query = new StringBuilder();
-        query.append("select id from ").append(table).append(" where ");
-        for (Map.Entry<String, Object> entry : columns.entrySet()) {
-            if (entry.getValue() != null) {
-                String value = entry.getValue().toString();
-                if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
-                    value = "'" + entry.getValue() + "'";
-                }
-                query.append(entry.getKey()).append("=").append(value).append(" and ");
-            }
-        }
-        query.delete(query.length() - 5, query.length());
-        query.append(';');
-        return query.toString();
-    }
-
-    private String getTableNameByClass(Class<?> clazz) {
-        Table table = clazz.getAnnotation(Table.class);
-        if (table == null) {
-            Entity entity = clazz.getAnnotation(Entity.class);
-            return entity.name();
-        }
-
-        return table.name();
-    }
+//    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
+//        StringBuilder builder = new StringBuilder();
+//        builder.append("SELECT * FROM ").
+//                append(dbTable.getName()).
+//                append(" WHERE ").
+//                append(dbTable.getPrimaryKey().getName()).
+//                append(" = ? ;");
+//        return builder.toString();
+//    }
+//
+//    private String getColumnName(Field field) {
+//        Column column = field.getAnnotation(Column.class);
+//        String name = field.getName();
+//        if (!column.name().isEmpty()) {
+//            name = column.name();
+//        }
+//        return name;
+//    }
+//
+//    private String createSelectQuery(Map<String, Object> columns, String table) {
+//        StringBuilder query = new StringBuilder();
+//        query.append("select id from ").append(table).append(" where ");
+//        for (Map.Entry<String, Object> entry : columns.entrySet()) {
+//            if (entry.getValue() != null) {
+//                String value = entry.getValue().toString();
+//                if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
+//                    value = "'" + entry.getValue() + "'";
+//                }
+//                query.append(entry.getKey()).append("=").append(value).append(" and ");
+//            }
+//        }
+//        query.delete(query.length() - 5, query.length());
+//        query.append(';');
+//        return query.toString();
+//    }
+//
+//    private String getTableNameByClass(Class<?> clazz) {
+//        Table table = clazz.getAnnotation(Table.class);
+//        if (table == null) {
+//            Entity entity = clazz.getAnnotation(Entity.class);
+//            return entity.name();
+//        }
+//
+//        return table.name();
+//    }
 
 //    private String getSelectByEntityObjectPreparedQuery(Object object) {
 //        Class clazz = object.getClass();
@@ -303,20 +318,21 @@ public class CrudServices {
 //        return query;
 //    }
 
-    private DBTable getTableByClass(Class clazz) {
-        for (DBTable dbt : tables) {
-            if (dbt.getMyEntityClass().equals(clazz)) {
-                return dbt;
-            }
-        }
-        return null;
+//    private DBTable getTableByClass(Class clazz) {
+//        for (DBTable dbt : tables) {
+//            if (dbt.getMyEntityClass().equals(clazz)) {
+//                return dbt;
+//            }
+//        }
+//        return null;
+//    }
+//
+//    private void isEntityCheck(Class<?> clazz) {
+//        if (!clazz.isAnnotationPresent(Entity.class)) {
+//            throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
+//        }
+//    }
+
+
+//}
     }
-
-    private void isEntityCheck(Class<?> clazz) {
-        if (!clazz.isAnnotationPresent(Entity.class)) {
-            throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
-        }
-    }
-
-
-}
