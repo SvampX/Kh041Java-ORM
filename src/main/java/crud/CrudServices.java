@@ -85,11 +85,10 @@ public class CrudServices {
     private String getJoinTablesDefineQuery() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : ManyToManyHandler.getRelationTables()) {
-            builder.append(prepareTableQuery(dbc));
+            builder.append(prepareJoinTableQuery(dbc));
         }
         return builder.toString();
     }
-
 
 
     private String addManyToManyForeignKeys() {
@@ -100,6 +99,7 @@ public class CrudServices {
             }
         }
         return builder.toString();
+
     }
 
     private void createForeignKey(StringBuilder builder, DBTable dbc, ForeignKey fk) {
@@ -113,6 +113,31 @@ public class CrudServices {
                 }
             }
         }
+    }
+
+    private StringBuilder prepareJoinTableQuery(DBTable dbTable) {
+        StringBuilder singleTableQuery = new StringBuilder();
+        //TODO checking on "Drop if exists parameter"
+        singleTableQuery.append("CREATE TABLE ").
+                append(dbTable.getName()).
+                append(" (\n");
+        singleTableQuery.append(getColumnsDefinition(dbTable.getColumnSet()));
+        singleTableQuery.delete(singleTableQuery.length() - 3, singleTableQuery.length());
+        singleTableQuery.append(",");
+        singleTableQuery.append(getRelationTablePrimaryKey(dbTable.getColumnSet()));
+        return singleTableQuery;
+    }
+
+    private StringBuilder getRelationTablePrimaryKey(Set<DBColumn> columnSet) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(" PRIMARY KEY(");
+        for (DBColumn column : columnSet) {
+            builder.append(column.getName());
+            builder.append(", ");
+        }
+        builder.delete(builder.length() - 2, builder.length());
+        builder.append("));");
+        return builder;
     }
 
     //TODO Read processing section
