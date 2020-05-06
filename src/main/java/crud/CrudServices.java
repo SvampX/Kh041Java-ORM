@@ -3,6 +3,7 @@ package crud;
 
 import annotations.Column;
 import annotations.Entity;
+import annotations.GeneratedValue;
 import annotations.Table;
 import annotations.handlers.*;
 import exceptions.DBException;
@@ -32,22 +33,27 @@ public class CrudServices {
 
     private StringBuilder prepareTableQuery(DBTable dbTable) {
         boolean hasPrimaryKey = dbTable.getPrimaryKey() != null;
+        GeneratedValueHandler generatedValueHandler = new GeneratedValueHandler();
         StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");
         if (hasPrimaryKey) {
-            singleTableQuery.append(dbTable.getPrimaryKey().getName()).
-                    append(" SERIAL4 PRIMARY KEY,\n");
+            try {
+                singleTableQuery.append(generatedValueHandler.createIdGenerator(dbTable))
+                        .append(",\n");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        singleTableQuery.append(getColumnsDefinition(dbTable.getColumnSet()));
+        singleTableQuery.append(getColumnsDefinition(dbTable));
         return singleTableQuery;
     }
 
-    private StringBuilder getColumnsDefinition(Set<DBColumn> dbColumns) {
+    private StringBuilder getColumnsDefinition(DBTable dbTable) {
         StringBuilder columnsDefinition = new StringBuilder();
-        for (DBColumn dbc : dbColumns) {
+        for (DBColumn dbc : dbTable.getColumnSet()) {
             columnsDefinition.append(dbc.getName()).
                     append(" ");
             if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
@@ -59,20 +65,69 @@ public class CrudServices {
                         append(",\n");
             }
         }
-        columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
+        if (dbTable.getJoinColumn() == null) {
+            columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
+        } else {
+            columnsDefinition.append(getJoinColumnDefinition(dbTable));
+        }
         columnsDefinition.append(");\n");
         return columnsDefinition;
+    }
+
+    private String getJoinColumnDefinition(DBTable dbTable) {
+        DBColumn joinColumn = dbTable.getJoinColumn();
+
+        return joinColumn.getName() + " " + joinColumn.getType().getSqlType();
     }
 
     public void initTables(Connection connection) {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+//            statement.execute(linkSequenceToTable());
+            statement.execute(addForeignKeysWithOneRelation());
             statement.execute(getJoinTablesDefineQuery());
             statement.execute(addManyToManyForeignKeys());
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
+    }
+
+//    private String linkSequenceToTable() {
+//        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
+//        StringBuilder linkQuery = new StringBuilder();
+//        for (DBTable dbTable : tables) {
+//            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
+//                    .append()
+//        }
+//        return null;
+//    }
+
+    private String addForeignKeysWithOneRelation() {
+        StringBuilder alterForeignKeysQuery = new StringBuilder();
+        for (DBTable dbTable : tables) {
+            if (dbTable.getJoinColumn() == null) {
+                continue;
+            }
+            alterForeignKeysQuery.append(createAlterForeignKeyQuery(dbTable));
+        }
+        return alterForeignKeysQuery.toString();
+    }
+
+    private String createAlterForeignKeyQuery(DBTable dbTable) {
+        StringBuilder query = new StringBuilder();
+        for (ForeignKey foreignKey : dbTable.getForeignKeys()) {
+            if (foreignKey.getRelationType() == RelationType.ManyToMany) {
+                continue;
+            }
+            query.append("ALTER TABLE ").append(dbTable.getName())
+                    .append(" ADD FOREIGN KEY ")
+                    .append("(").append(dbTable.getJoinColumn().getName()).append(")")
+                    .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";\n");
+        }
+
+        return query.toString();
     }
 
 

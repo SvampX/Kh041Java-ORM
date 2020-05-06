@@ -31,6 +31,8 @@ public class TablesInitializationTest {
         }
         tables = EntityToTableMapper.getTables();
         crudServices = new CrudServices();
+        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
     }
 
     @Test
@@ -51,10 +53,10 @@ public class TablesInitializationTest {
     public void tableCreationTest() {
         Phone phone = new Phone();
         phone.setNumber("937-99-92");
-        crudServices.setConnection(connection);
-        crudServices.create(phone);
-//        CrudServices crudServices = new CrudServices();
-//        crudServices.initTables(connection);
+//        crudServices.setConnection(connection);
+//        crudServices.create(phone);
+        CrudServices crudServices = new CrudServices();
+        crudServices.initTables(connection);
     }
 
     @Test
