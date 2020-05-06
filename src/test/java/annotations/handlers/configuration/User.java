@@ -1,13 +1,8 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.GeneratedValue;
-import annotations.Id;
-import annotations.OneToMany;
-import annotations.OneToOne;
-import annotations.Table;
+import annotations.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +31,9 @@ public class User {
 
     @OneToMany(mappedBy = "userDetails")
     private List<Address> addresses;
+
+    @ManyToMany(tableName = "person_car", joinColumnsName = "person_id", joinColumnsReferencedName = "user_id")
+    public List<Car> myCars = new ArrayList<>();
 
     public User() {
     }
@@ -70,6 +68,14 @@ public class User {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public void setPhone(Phone phone) {
+        this.phone = phone;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
     }
 
     @Override
