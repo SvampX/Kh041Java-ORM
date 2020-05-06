@@ -28,7 +28,7 @@ class CrudServicesTest {
     @Test
     void readEntityById() {
 
-        SimpleEntity simpleEntity = (SimpleEntity) crudServices.readEntityById( 1, SimpleEntity.class);
+        SimpleEntity simpleEntity = (SimpleEntity) crudServices.readById( 1, SimpleEntity.class);
         System.out.println("simpleEntity = " + simpleEntity);
     }
 

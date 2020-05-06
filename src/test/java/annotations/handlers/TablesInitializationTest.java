@@ -1,32 +1,27 @@
 package annotations.handlers;
 
-import annotations.handlers.configuration.ExtendedEntity;
+import annotations.handlers.configuration.Phone;
 import connections.ConnectionToDB;
 import crud.CrudServices;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.reflections.Reflections;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Set;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TablesInitializationTest {
     private static Connection connection;
-    private static DBTable tableToCreate;
     private static Set<DBTable> tables;
+    private static CrudServices crudServices;
 
     @BeforeAll
     void init() {
-        tableToCreate = new DBTable();
-        Reflections reflections = new Reflections(ExtendedEntity.class);
-        EntityHandler.setReflections(reflections);
-        tables = EntityToTableMapper.getTables();
         ConnectionToDB connectionToDB;
         try {
             connectionToDB = ConnectionToDB.getInstance();
@@ -34,6 +29,8 @@ public class TablesInitializationTest {
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
+        tables = EntityToTableMapper.getTables();
+        crudServices = new CrudServices();
     }
 
     @Test
@@ -52,25 +49,43 @@ public class TablesInitializationTest {
 
     @Test
     public void tableCreationTest() {
-        CrudServices crudServices = new CrudServices();
-        crudServices.initTables(connection);
+        Phone phone = new Phone();
+        phone.setNumber("937-99-92");
+        crudServices.setConnection(connection);
+        crudServices.create(phone);
+//        CrudServices crudServices = new CrudServices();
+//        crudServices.initTables(connection);
+    }
 
-        String dropTestTables = "DROP TABLE IF EXISTS test_users;\n" +
-                "DROP TABLE IF EXISTS firstTable CASCADE ;\n" +
-                "DROP TABLE IF EXISTS phones;\n" +
-                "DROP TABLE IF EXISTS addresses; \n" +
-                "DROP TABLE IF EXISTS secondTable CASCADE ; \n" +
-                "DROP TABLE IF EXISTS test CASCADE;";
-        try {
-            Statement statement = connection.createStatement();
-            statement.execute(dropTestTables);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+    @Test
+    private void tableRecordCreateTest() {
+
+
+    }
+
+    @Test
+    public void eraseTables() {
+        boolean dropTablesAfterTest = true;
+        StringBuilder dropTablesQuery = new StringBuilder();
+        List<DBTable> relationTables = ManyToManyHandler.getRelationTables();
+        for (DBTable table : tables) {
+            dropTablesQuery.append("DROP TABLE IF EXISTS ").
+                    append(table.getName()).
+                    append(" CASCADE;\n");
+        }
+        for (DBTable table : relationTables) {
+            dropTablesQuery.append("DROP TABLE IF EXISTS ").
+                    append(table.getName()).
+                    append(" CASCADE;\n");
+        }
+        if (dropTablesAfterTest) {
+            try {
+                Statement statement = connection.createStatement();
+                statement.execute(dropTablesQuery.toString());
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
         }
     }
-    @AfterAll
-    public void eraseTables() {
-        StringBuilder dropTablesQuery = new StringBuilder();
 
-    }
 }
