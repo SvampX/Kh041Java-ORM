@@ -33,12 +33,12 @@ public class ConnectionToDB {
     }
 
     private ConnectionToDB() throws SQLException {
-        initContext();
+        getUsersMetadata();
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }
 
-    public static void initContext() {
+    public static void getUsersMetadata() {
         StackTraceElement e[] = Thread.currentThread().getStackTrace();
         String callingClassName = e[4].getClassName();
         System.out.println(callingClassName);
@@ -49,7 +49,7 @@ public class ConnectionToDB {
         }
         Reflections reflections;
         try {
-            reflections = new Reflections(Class.forName("annotations.handlers.EntityToTableMapperTest"));
+            reflections = new Reflections(Class.forName(callingClassName));
             EntityHandler.setReflections(reflections);
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
@@ -104,8 +104,8 @@ public class ConnectionToDB {
         availableConList.add(con);
         unvailableConList.remove(con);
     }
-    public String getDriver(){
-       return driver.split("\\.")[1];
+    public String getDialect(){
+        return driver.split("\\.")[1];
     }
 }
 

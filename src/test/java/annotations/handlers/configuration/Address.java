@@ -3,6 +3,7 @@ package annotations.handlers.configuration;
 import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
+import annotations.GenerationType;
 import annotations.Id;
 import annotations.JoinColumn;
 import annotations.ManyToOne;
@@ -12,9 +13,9 @@ import annotations.Table;
 @Table(name = "addresses")
 public class Address {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "address_id")
-    private int id;
+    private Long id;
 
     @Column(name = "city")
     private String city;
@@ -38,11 +39,11 @@ public class Address {
     public Address() {
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

@@ -7,7 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface GeneratedValue {
-    GenerationType strategy() default GenerationType.AUTO;
-    String generator() default "";
+public @interface SequenceGenerator {
+    String name();
+    String sequenceName() default "";
+    int initialValue() default 1;
+    int allocationSize() default 50;
 }

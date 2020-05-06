@@ -10,6 +10,8 @@ import java.util.Set;
 public class SimpleEntity {
 
     @Id
+    @SequenceGenerator(name = "genesis", initialValue = 42, allocationSize = 2)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genesis")
     @Column(name = "id")
     int nameId;
 
@@ -36,5 +38,13 @@ public class SimpleEntity {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleEntity{" +
+                "nameId=" + nameId +
+                ", userName='" + userName + '\'' +
+                '}';
     }
 }

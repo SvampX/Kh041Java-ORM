@@ -9,8 +9,8 @@ import java.util.Set;
 @Table(name = "firstTable")
 public class ExtendedEntity {
 
-
     @Id
+    @GeneratedValue
     @Column(name = "name_id")
     int nameId;
 

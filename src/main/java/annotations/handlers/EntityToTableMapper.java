@@ -18,7 +18,7 @@ public class EntityToTableMapper {
     static {
         EntityHandler.inspectEntities();
     }
-    public static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
+    private static Set<Class<?>> entitiesSet = EntityHandler.getEntitiesSet();
     private static Set<DBTable> tables;
 
     private static Set<Field> getAnnotatedFields(Class<?> clazz, Class<? extends Annotation> annotation) {
@@ -32,8 +32,9 @@ public class EntityToTableMapper {
         return annotatedFields;
     }
 
+
     public static Set<DBTable> getTables() {
-        if(tables == null){
+        if (tables == null) {
             tables = mapTablesFromEntities();
         }
         return tables;
@@ -143,5 +144,9 @@ public class EntityToTableMapper {
             default:
                 return Type.OTHER;
         }
+    }
+
+    public static Set<Class<?>> getEntitiesSet() {
+        return entitiesSet;
     }
 }
