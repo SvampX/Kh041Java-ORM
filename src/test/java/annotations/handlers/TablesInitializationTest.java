@@ -53,10 +53,10 @@ public class TablesInitializationTest {
     public void tableCreationTest() {
         Phone phone = new Phone();
         phone.setNumber("937-99-92");
-        crudServices.setConnection(connection);
-        crudServices.create(phone);
-//        CrudServices crudServices = new CrudServices();
-//        crudServices.initTables(connection);
+//        crudServices.setConnection(connection);
+//        crudServices.create(phone);
+        CrudServices crudServices = new CrudServices();
+        crudServices.initTables(connection);
     }
 
     @Test

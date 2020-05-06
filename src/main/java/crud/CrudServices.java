@@ -3,6 +3,7 @@ package crud;
 
 import annotations.Column;
 import annotations.Entity;
+import annotations.GeneratedValue;
 import annotations.Table;
 import annotations.handlers.*;
 import exceptions.DBException;
@@ -32,23 +33,28 @@ public class CrudServices {
 
     private StringBuilder prepareTableQuery(DBTable dbTable) {
         boolean hasPrimaryKey = dbTable.getPrimaryKey() != null;
+        GeneratedValueHandler generatedValueHandler = new GeneratedValueHandler();
         StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");
         if (hasPrimaryKey) {
-            singleTableQuery.append(dbTable.getPrimaryKey().getName()).
-                    append(" SERIAL4 PRIMARY KEY,\n");
+            try {
+                singleTableQuery.append(generatedValueHandler.createIdGenerator(dbTable))
+                        .append(",\n");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        builder.append(getColumnsDefinition(dbTable));
-        return builder;
+        singleTableQuery.append(getColumnsDefinition(dbTable));
+        return singleTableQuery;
     }
 
     private StringBuilder getColumnsDefinition(DBTable dbTable) {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder columnsDefinition = new StringBuilder();
         for (DBColumn dbc : dbTable.getColumnSet()) {
-            builder.append(dbc.getName()).
+            columnsDefinition.append(dbc.getName()).
                     append(" ");
             if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
                 columnsDefinition.append("VARCHAR (").
@@ -60,7 +66,7 @@ public class CrudServices {
             }
         }
         if (dbTable.getJoinColumn() == null) {
-            columnsDefinition.delete(builder.length() - 2, builder.length());
+            columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
         } else {
             columnsDefinition.append(getJoinColumnDefinition(dbTable));
         }
@@ -78,6 +84,7 @@ public class CrudServices {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+//            statement.execute(linkSequenceToTable());
             statement.execute(addForeignKeysWithOneRelation());
             statement.execute(getJoinTablesDefineQuery());
             statement.execute(addManyToManyForeignKeys());
@@ -85,6 +92,16 @@ public class CrudServices {
             sql.printStackTrace();
         }
     }
+
+//    private String linkSequenceToTable() {
+//        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
+//        StringBuilder linkQuery = new StringBuilder();
+//        for (DBTable dbTable : tables) {
+//            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
+//                    .append()
+//        }
+//        return null;
+//    }
 
     private String addForeignKeysWithOneRelation() {
         StringBuilder alterForeignKeysQuery = new StringBuilder();

@@ -58,7 +58,8 @@ public class ConnectionToDB {
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;
-        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+//        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
             input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {
