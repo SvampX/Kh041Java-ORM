@@ -42,11 +42,6 @@ public class ConnectionToDB {
         StackTraceElement e[] = Thread.currentThread().getStackTrace();
         String callingClassName = e[4].getClassName();
         System.out.println(callingClassName);
-        try {
-            Class clazz = Class.forName(callingClassName);
-        } catch (ClassNotFoundException classNotFoundException) {
-            classNotFoundException.printStackTrace();
-        }
         Reflections reflections;
         try {
             reflections = new Reflections(Class.forName(callingClassName));
@@ -58,7 +53,7 @@ public class ConnectionToDB {
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;
-        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
             input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {

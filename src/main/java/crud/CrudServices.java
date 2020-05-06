@@ -3,15 +3,12 @@ package crud;
 
 import annotations.Column;
 import annotations.Entity;
-import annotations.Table;
 import annotations.handlers.*;
-import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,7 +82,6 @@ public class CrudServices {
     }
 
 
-
     private String addManyToManyForeignKeys() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : tables) {
@@ -101,9 +97,18 @@ public class CrudServices {
             for (ForeignKey relationTableKey : fk.getOtherTable().getForeignKeys()) {
                 if (relationTableKey.getOtherTable() == dbc) {
                     DBTable relationTable = fk.getOtherTable();
-                    builder.append("ALTER TABLE " + relationTable.getName() + "\n" +
-                            "ADD FOREIGN KEY" + "(" + relationTableKey.getMyTableKey().getName() + ")" + " REFERENCES " +
-                            dbc.getName() + "(" + relationTableKey.getOtherTableKey().getName() + ");" + "\n");
+                    builder.append("ALTER TABLE ").
+                            append(relationTable.getName()).
+                            append("\n").
+                            append("ADD FOREIGN KEY").
+                            append("(").
+                            append(relationTableKey.getMyTableKey().getName()).
+                            append(")").
+                            append(" REFERENCES ").
+                            append(dbc.getName()).
+                            append("(").
+                            append(relationTableKey.getOtherTableKey().getName()).
+                            append(");").append("\n");
                 }
             }
         }
@@ -120,17 +125,108 @@ public class CrudServices {
             assert table != null;
             String preparedQuery = createSelectAllByPrimaryKeyQuery(table);
             PreparedStatement preparedStatement = connection.prepareStatement(preparedQuery);
-            if (id instanceof Integer) {
-                preparedStatement.setInt(1, (Integer) id);
-            } else {
-                preparedStatement.setLong(1, (Long) id);
-            }
+            hasCorrectIdTypeCheck(id);
+            preparedStatement.setObject(1, id);
             ResultSet rs = preparedStatement.executeQuery();
-            fillObjectSimpleFields(entity, table, rs);
+            fillObjectFieldsFromTable(entity, table, rs);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException | SQLException e) {
             e.printStackTrace();
         }
         return entity;
+    }
+
+    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
+        StringBuilder selectAllById = new StringBuilder();
+        selectAllById.append("SELECT * FROM ").
+                append(dbTable.getName()).
+                append(" WHERE ").
+                append(dbTable.getPrimaryKey().getName()).
+                append(" = ? ;");
+        return selectAllById.toString();
+    }
+
+    public Set<Object> readEntityByPartialInitializedInstance(Object entity)  {
+        Class<?> clazz = entity.getClass();
+        isEntityCheck(clazz);
+        Set<Object> foundedEntities = new HashSet<>();
+        Set<Field> notNullFields = getNotNullFields(entity, clazz);
+        DBTable dbTable = getTableByClass(clazz);
+        List<DBColumn> readQueryColumns = getReadQueryColumns(notNullFields, dbTable);
+        if (readQueryColumns.size() == 0) {
+            throw new IllegalArgumentException("Entity \"" + dbTable.getName() +
+                    "\" should have at least one initialized field annotated @Column");
+        }
+        String readQuery = getReadByColumnsValuesQuery(dbTable, readQueryColumns);
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(readQuery);
+            setStatementValues(preparedStatement, readQueryColumns, entity);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            fillEntitiesFromResultSet(dbTable, resultSet, foundedEntities);
+        } catch (SQLException | NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return foundedEntities;
+    }
+
+    public Set<Object> readAll(Class<?> clazz) {
+        isEntityCheck(clazz);
+        Set<Object> foundedEntities = new HashSet<>();
+        DBTable dbTable = getTableByClass(clazz);
+        String readQuery = "SELECT * FROM " + dbTable.getName() + ";";
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(readQuery);
+            fillEntitiesFromResultSet(dbTable, resultSet, foundedEntities);
+        } catch (SQLException | NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return foundedEntities;
+    }
+
+
+    private Set<Field> getNotNullFields(Object entity, Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredFields()).
+                peek(field -> field.setAccessible(true)).
+                filter(field -> {
+                    try {
+                        return field.get(entity) != null;
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }).collect(Collectors.toSet());
+    }
+
+    private void fillEntitiesFromResultSet(DBTable dbTable, ResultSet resultSet, Set<Object> foundedEntities) throws SQLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Object entity = null;
+        while (!resultSet.isAfterLast()) {
+            entity = dbTable.getMyEntityClass().getConstructor().newInstance();
+            fillObjectFieldsFromTable(entity, dbTable, resultSet);
+            foundedEntities.add(entity);
+        }
+        foundedEntities.remove(entity);
+    }
+
+    private String getReadByColumnsValuesQuery(DBTable dbTable, List<DBColumn> readQueryColumns) {
+        StringBuilder readQuery = new StringBuilder();
+        readQuery.append("SELECT * FROM ").
+                append(dbTable.getName()).append(" WHERE ");
+        for (DBColumn dbc : readQueryColumns) {
+            readQuery.append(dbc.getName()).append(" = ?, ");
+        }
+        readQuery.delete(readQuery.length() - 2, readQuery.length());
+        readQuery.append(" ;");
+        return readQuery.toString();
+    }
+
+    private List<DBColumn> getReadQueryColumns(Set<Field> notNullFields, DBTable table) {
+        List<DBColumn> columns = new ArrayList<>();
+        for (DBColumn dbc : table.getColumnSet()) {
+            if (notNullFields.contains(dbc.getField())) {
+                columns.add(dbc);
+            }
+        }
+        return columns;
     }
 
     //TODO Create processing section
@@ -140,63 +236,18 @@ public class CrudServices {
         isEntityCheck(clazz);
         DBTable dbTable = getTableByClass(clazz);
         List<DBColumn> columnsOrder = new ArrayList<>();
-        String insertPreparedQuery = createInsertQuery(dbTable, entity, columnsOrder);
+        String insertPreparedQuery = buildCreateQuery(dbTable, entity, columnsOrder);
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(insertPreparedQuery);
-            setCreateStatementValues(preparedStatement, columnsOrder, entity);
+            setStatementValues(preparedStatement, columnsOrder, entity);
             return preparedStatement.execute();
         } catch (SQLException | IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
             e.printStackTrace();
         }
-
         return false;
     }
 
-    private void setCreateStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException, NoSuchMethodException, InstantiationException, InvocationTargetException {
-        for (int i = 0; i < columnsOrder.size(); i++) {
-            DBColumn dbc = columnsOrder.get(i);
-            setPreparedStatementValueFromDBColumn(preparedStatement, entity, dbc, i + 1);
-
-        }
-    }
-
-    private void setPreparedStatementValueFromDBColumn(PreparedStatement preparedStatement, Object entity, DBColumn dbc, int position) throws IllegalAccessException, SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException {
-        Field field = dbc.getField();
-        Object value = field.get(entity);
-        String fieldType = field.getType().getSimpleName();
-        switch (fieldType.toLowerCase()) {
-            case "string":
-                preparedStatement.setString(position, (String) value);
-                break;
-            case "integer":
-            case "int":
-                preparedStatement.setInt(position, (Integer) value);
-                break;
-            case "short":
-                preparedStatement.setShort(position, (Short) value);
-                break;
-            case "float":
-                preparedStatement.setFloat(position, (Float) value);
-                break;
-            case "double":
-                preparedStatement.setDouble(position, (Double) value);
-                break;
-            case "bigdecimal":
-                preparedStatement.setBigDecimal(position, (BigDecimal) value);
-                break;
-            case "char":
-            case "character":
-                preparedStatement.setString(position, String.valueOf(value));
-                break;
-            case "boolean":
-                preparedStatement.setBoolean(position, (Boolean) value);
-                break;
-            default:
-                preparedStatement.setObject(position, value);
-        }
-    }
-
-    private String createInsertQuery(DBTable dbTable, Object entity, List<DBColumn> columnsOrder) {
+    private String buildCreateQuery(DBTable dbTable, Object entity, List<DBColumn> columnsOrder) {
         StringBuilder insertQuery = new StringBuilder();
         insertQuery.append("INSERT INTO ").
                 append(dbTable.getName()).append("(").
@@ -218,15 +269,94 @@ public class CrudServices {
         return columnNames;
     }
 
-    private void fillObjectSimpleFields(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
+    //TODO Delete processing section
+
+    public boolean delete(Object id, Class<?> clazz) {
+        isEntityCheck(clazz);
+        DBTable table = getTableByClass(clazz);
+        hasPrimaryKeyCheck(table);
+        hasCorrectIdTypeCheck(id);
+        String deleteQuery = buildDeleteQuery(id, table);
+        try {
+            Statement statement = connection.createStatement();
+            return statement.execute(deleteQuery);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private String buildDeleteQuery(Object id, DBTable table) {
+        StringBuilder deleteQuery = new StringBuilder();
+        deleteQuery.append("DELETE FROM ").
+                append(table.getName()).
+                append(" WHERE ").
+                append(table.getPrimaryKey().getName()).
+                append(" = ").
+                append(id).
+                append(" ;");
+        return deleteQuery.toString();
+    }
+
+    //TODO Update processing section
+
+    public boolean update(Object entity){
+        Class<?> clazz = entity.getClass();
+        isEntityCheck(clazz);
+        DBTable dbTable = getTableByClass(clazz);
+        List<DBColumn> columnsOrder = new ArrayList<>();
+        hasPrimaryKeyCheck(dbTable);
+        try {
+            Object id = dbTable.getPrimaryKey().getField().get(entity);
+            hasCorrectIdTypeCheck(id);
+            String updatePreparedQuery = buildUpdateQuery(dbTable, id, columnsOrder);
+            PreparedStatement preparedStatement = connection.prepareStatement(updatePreparedQuery);
+            setStatementValues(preparedStatement, columnsOrder, entity);
+            return preparedStatement.execute();
+        } catch (SQLException | IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private String buildUpdateQuery(DBTable dbTable, Object id, List<DBColumn> columnsOrder) {
+        StringBuilder updateQuery = new StringBuilder();
+        updateQuery.append("UPDATE ").
+                append(dbTable.getName()).
+                append("\n SET ").
+                append(prepareColumnsForUpdateQuery(dbTable, columnsOrder)).
+                append("\n WHERE ").
+                append(dbTable.getPrimaryKey().getName()).
+                append(" = ").append(id).append(";");
+        return updateQuery.toString();
+    }
+
+    private StringBuilder prepareColumnsForUpdateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
+        StringBuilder columnNames = new StringBuilder();
+        for (DBColumn dbc : dbTable.getColumnSet()) {
+            columnNames.append(dbc.getName()).append(" = ?, ");
+            columnsOrder.add(dbc);
+        }
+        columnNames.delete(columnNames.length() - 2, columnNames.length());
+        return columnNames;
+    }
+
+    //TODO multitask methods
+
+    private void setStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException, NoSuchMethodException, InstantiationException, InvocationTargetException {
+        for (int i = 0; i < columnsOrder.size(); i++) {
+            DBColumn dbc = columnsOrder.get(i);
+            Field field = dbc.getField();
+            Object value = field.get(entity);
+            preparedStatement.setObject(i + 1, value);
+        }
+    }
+
+    private void fillObjectFieldsFromTable(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
         boolean hasPrimaryKey = table.getPrimaryKey() != null;
-        DBColumn currentColumn;
-        int i = 0;
-        while (rs.next()) {
+        if (rs.next()) {
             if (hasPrimaryKey) {
                 fillPrimaryKeyField(entity, table, rs);
-                hasPrimaryKey = false;
-                i++;
             }
             for (DBColumn dbColumn : table.getColumnSet()) {
                 fillSimpleField(entity, dbColumn, rs);
@@ -250,167 +380,9 @@ public class CrudServices {
 
     private void fillSimpleField(Object entity, DBColumn dbColumn, ResultSet rs) throws IllegalAccessException, SQLException {
         Field entityField = dbColumn.getField();
-        String fieldType = entityField.getType().getSimpleName();
         String columnName = dbColumn.getName();
-        switch (fieldType.toLowerCase()) {
-            case "string":
-                entityField.set(entity, rs.getString(columnName));
-                break;
-            case "integer":
-            case "int":
-                entityField.set(entity, rs.getInt(columnName));
-                break;
-            case "short":
-                entityField.set(entity, rs.getShort(columnName));
-                break;
-            case "float":
-                entityField.set(entity, rs.getFloat(columnName));
-                break;
-            case "double":
-                entityField.set(entity, rs.getDouble(columnName));
-                break;
-            case "bigdecimal":
-                entityField.set(entity, rs.getBigDecimal(columnName));
-                break;
-            case "char":
-            case "character":
-                entityField.set(entity, rs.getString(columnName).charAt(0));
-                break;
-            case "boolean":
-                entityField.set(entity, rs.getBoolean(columnName));
-                break;
-            default:
-                entityField.set(entity, rs.getObject(columnName));
-        }
+        entityField.set(entity, rs.getObject(columnName));
     }
-
-    public Object readEntityByPartialInitializedInstance(Object object) throws IllegalAccessException, DBException {
-        Class<?> clazz = object.getClass();
-        isEntityCheck(clazz);
-        Set<Field> notNullFields = Arrays.stream(clazz.getDeclaredFields()).
-                filter(field -> {
-                    try {
-                        return field.get(new Object()) == null;
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                    return false;
-                }).collect(Collectors.toSet());
-
-        DBTable table = getTableByClass(clazz);
-        Map<String, Object> columns = new HashMap<>();
-        for (Field f : clazz.getDeclaredFields()) {
-            if (f.isAnnotationPresent(Column.class)) {
-                f.setAccessible(true);
-                columns.put(getColumnName(f), f.get(object));
-            }
-        }
-
-        //TODO
-
-        return object;
-    }
-
-    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("SELECT * FROM ").
-                append(dbTable.getName()).
-                append(" WHERE ").
-                append(dbTable.getPrimaryKey().getName()).
-                append(" = ? ;");
-        return builder.toString();
-    }
-
-    private String getColumnName(Field field) {
-        Column column = field.getAnnotation(Column.class);
-        String name = field.getName();
-        if (!column.name().isEmpty()) {
-            name = column.name();
-        }
-        return name;
-    }
-
-    private String createSelectQuery(Map<String, Object> columns, String table) {
-        StringBuilder query = new StringBuilder();
-        query.append("select id from ").append(table).append(" where ");
-        for (Map.Entry<String, Object> entry : columns.entrySet()) {
-            if (entry.getValue() != null) {
-                String value = entry.getValue().toString();
-                if (entry.getValue() instanceof String || entry.getValue() instanceof Character) {
-                    value = "'" + entry.getValue() + "'";
-                }
-                query.append(entry.getKey()).append("=").append(value).append(" and ");
-            }
-        }
-        query.delete(query.length() - 5, query.length());
-        query.append(';');
-        return query.toString();
-    }
-
-    private String getTableNameByClass(Class<?> clazz) {
-        Table table = clazz.getAnnotation(Table.class);
-        if (table == null) {
-            Entity entity = clazz.getAnnotation(Entity.class);
-            return entity.name();
-        }
-
-        return table.name();
-    }
-
-//    private String getSelectByEntityObjectPreparedQuery(Object object) {
-//        Class clazz = object.getClass();
-//        String preparedQuery;
-//        StringBuilder builder = new StringBuilder();
-//        DBTable dbTable = getTableByClass(clazz);
-//        if (dbTable == null) {
-//            throw new DataObtainingFailureException(clazz.getSimpleName() + " is not Entity annotated class");
-//        }
-//        preparedQuery = parseSelectTableToPreparedQuery(dbTable, object);
-//
-//        return builder.toString();
-//    }
-
-//    private String parseSelectTableToPreparedQuery(DBTable dbTable, Object object) {
-//        ExistingQuery existingQuery = new ExistingQuery();
-//        String query;
-//        StringBuilder builder = new StringBuilder();
-//        DBColumn primaryKey = dbTable.getPrimaryKey();
-//        Set<DBColumn> columns = dbTable.getColumnSet();
-//        try {
-//            if (primaryKey.getField().get(new Object()) != null) {
-//                existingQuery.addColumn(primaryKey);
-//                query = createSelectAllByPrimaryKeyQuery(dbTable);
-//                existingQuery.setQuery(query);
-//                queryWithTypesList.put(object.getClass(), existingQuery);
-//                return query;
-//            }
-//        } catch (IllegalAccessException e) {
-//            e.printStackTrace();
-//        }
-//        builder.append("SELECT * FROM ").
-//                append(dbTable.getName()).
-//                append(" WHERE ");
-//        for (DBColumn column : columns) {
-//            try {
-//                if (column.getField().get(new Object()) != null) {
-//                    queryColumns.add(column);
-//                    builder.append(column.getName()).
-//                            append(" = ? and ");
-//                }
-//            } catch (IllegalAccessException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        if (queryColumns.size() < 1) {
-//            throw new IllegalStateException("Entity instance should have " +
-//                    "at least 1 initialized field annotated with @Column");
-//        }
-//        builder.delete(builder.length() - 4, builder.length());
-//        builder.append(';');
-//        query = builder.toString();
-//        queryWithTypesList.put(query, queryColumns);
-//        return query;
-//    }
 
     private DBTable getTableByClass(Class clazz) {
         for (DBTable dbt : tables) {
@@ -419,6 +391,21 @@ public class CrudServices {
             }
         }
         return null;
+    }
+
+    //TODO Checks section
+
+    private void hasPrimaryKeyCheck(DBTable table) {
+        boolean hasPrimaryKey = table.getPrimaryKey() != null;
+        if (!hasPrimaryKey){
+            throw new IllegalStateException("For this operation Entity should have @Id annotated field");
+        }
+    }
+
+    private void hasCorrectIdTypeCheck(Object id) {
+        if (!(id instanceof Integer) && !(id instanceof Long)) {
+            throw new IllegalArgumentException("Primary key must be initialized and Integer or Long type");
+        }
     }
 
     private void isEntityCheck(Class<?> clazz) {
