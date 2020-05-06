@@ -93,15 +93,15 @@ public class CrudServices {
         }
     }
 
-    private String linkSequenceToTable() {
-        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
-        StringBuilder linkQuery = new StringBuilder();
-        for (DBTable dbTable : tables) {
-            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
-                    .append(sequenceList.get(dbTable.getName()))
-        }
-        return null;
-    }
+//    private String linkSequenceToTable() {
+//        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
+//        StringBuilder linkQuery = new StringBuilder();
+//        for (DBTable dbTable : tables) {
+//            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
+//                    .append(sequenceList.get(dbTable.getName()))
+//        }
+//        return null;
+//    }
 
     private String addForeignKeysWithOneRelation() {
         StringBuilder alterForeignKeysQuery = new StringBuilder();
