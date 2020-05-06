@@ -17,9 +17,6 @@ public class Address {
     @Column(name = "address_id")
     private Long id;
 
-    @Column(name = "address_id")
-    private String addressId;
-
     @Column(name = "city")
     private String city;
 

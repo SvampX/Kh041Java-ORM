@@ -1,25 +1,19 @@
 package crud;
 
 
-import annotations.handlers.*;
 import annotations.Column;
 import annotations.Entity;
 import annotations.Table;
-import annotations.handlers.DBColumn;
-import annotations.handlers.DBTable;
-import annotations.handlers.EntityToTableMapper;
-import annotations.handlers.Type;
+import annotations.handlers.*;
 import exceptions.DBException;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CrudServices {
@@ -147,7 +141,7 @@ public class CrudServices {
 
     //TODO Read processing section
 
-    public Object readEntityById(Object id, Class<?> clazz) {
+    public Object readById(Object id, Class<?> clazz) {
         isEntityCheck(clazz);
         Object entity = null;
         try {
@@ -167,6 +161,91 @@ public class CrudServices {
             e.printStackTrace();
         }
         return entity;
+    }
+
+    //TODO Create processing section
+
+    public boolean create(Object entity) {
+        Class<?> clazz = entity.getClass();
+        isEntityCheck(clazz);
+        DBTable dbTable = getTableByClass(clazz);
+        List<DBColumn> columnsOrder = new ArrayList<>();
+        String insertPreparedQuery = createInsertQuery(dbTable, entity, columnsOrder);
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(insertPreparedQuery);
+            setCreateStatementValues(preparedStatement, columnsOrder, entity);
+            return preparedStatement.execute();
+        } catch (SQLException | IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private void setCreateStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException, NoSuchMethodException, InstantiationException, InvocationTargetException {
+        for (int i = 0; i < columnsOrder.size(); i++) {
+            DBColumn dbc = columnsOrder.get(i);
+            setPreparedStatementValueFromDBColumn(preparedStatement, entity, dbc, i + 1);
+
+        }
+    }
+
+    private void setPreparedStatementValueFromDBColumn(PreparedStatement preparedStatement, Object entity, DBColumn dbc, int position) throws IllegalAccessException, SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException {
+        Field field = dbc.getField();
+        Object value = field.get(entity);
+        String fieldType = field.getType().getSimpleName();
+        switch (fieldType.toLowerCase()) {
+            case "string":
+                preparedStatement.setString(position, (String) value);
+                break;
+            case "integer":
+            case "int":
+                preparedStatement.setInt(position, (Integer) value);
+                break;
+            case "short":
+                preparedStatement.setShort(position, (Short) value);
+                break;
+            case "float":
+                preparedStatement.setFloat(position, (Float) value);
+                break;
+            case "double":
+                preparedStatement.setDouble(position, (Double) value);
+                break;
+            case "bigdecimal":
+                preparedStatement.setBigDecimal(position, (BigDecimal) value);
+                break;
+            case "char":
+            case "character":
+                preparedStatement.setString(position, String.valueOf(value));
+                break;
+            case "boolean":
+                preparedStatement.setBoolean(position, (Boolean) value);
+                break;
+            default:
+                preparedStatement.setObject(position, value);
+        }
+    }
+
+    private String createInsertQuery(DBTable dbTable, Object entity, List<DBColumn> columnsOrder) {
+        StringBuilder insertQuery = new StringBuilder();
+        insertQuery.append("INSERT INTO ").
+                append(dbTable.getName()).append("(").
+                append(prepareColumnsForCreateQuery(dbTable, columnsOrder)).
+                append(") VALUES(").
+                append("?,".repeat(columnsOrder.size())).
+                delete(insertQuery.length() - 1, insertQuery.length()).
+                append(");");
+        return insertQuery.toString();
+    }
+
+    private StringBuilder prepareColumnsForCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
+        StringBuilder columnNames = new StringBuilder();
+        for (DBColumn dbc : dbTable.getColumnSet()) {
+            columnNames.append(dbc.getName()).append(", ");
+            columnsOrder.add(dbc);
+        }
+        columnNames.delete(columnNames.length() - 2, columnNames.length());
+        return columnNames;
     }
 
     private void fillObjectSimpleFields(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
@@ -375,6 +454,10 @@ public class CrudServices {
     private void isEntityCheck(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(Entity.class)) {
             throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
+        }
+        DBTable dbTable = getTableByClass(clazz);
+        if (dbTable.getPrimaryKey() == null && dbTable.getColumnSet() == null) {
+            throw new IllegalStateException("Entity must have at least one @Column or @Id field");
         }
     }
 
