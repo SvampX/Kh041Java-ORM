@@ -13,7 +13,7 @@ import annotations.Table;
 @Table(name = "addresses")
 public class Address {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column(name = "address_id")
     private Long id;
 

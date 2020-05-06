@@ -31,6 +31,8 @@ public class TablesInitializationTest {
         }
         tables = EntityToTableMapper.getTables();
         crudServices = new CrudServices();
+        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
     }
 
     @Test

@@ -1,7 +1,6 @@
 package crud;
 
 
-import annotations.Column;
 import annotations.Entity;
 import annotations.handlers.*;
 import exceptions.DataObtainingFailureException;
@@ -29,22 +28,27 @@ public class CrudServices {
 
     private StringBuilder prepareTableQuery(DBTable dbTable) {
         boolean hasPrimaryKey = dbTable.getPrimaryKey() != null;
+        GeneratedValueHandler generatedValueHandler = new GeneratedValueHandler();
         StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");
         if (hasPrimaryKey) {
-            singleTableQuery.append(dbTable.getPrimaryKey().getName()).
-                    append(" SERIAL4 PRIMARY KEY,\n");
+            try {
+                singleTableQuery.append(generatedValueHandler.createIdGenerator(dbTable))
+                        .append(",\n");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        singleTableQuery.append(getColumnsDefinition(dbTable.getColumnSet()));
+        singleTableQuery.append(getColumnsDefinition(dbTable));
         return singleTableQuery;
     }
 
-    private StringBuilder getColumnsDefinition(Set<DBColumn> dbColumns) {
+    private StringBuilder getColumnsDefinition(DBTable dbTable) {
         StringBuilder columnsDefinition = new StringBuilder();
-        for (DBColumn dbc : dbColumns) {
+        for (DBColumn dbc : dbTable.getColumnSet()) {
             columnsDefinition.append(dbc.getName()).
                     append(" ");
             if (dbc.getType().getSqlType().equals(Type.STRING.getSqlType())) {
@@ -56,15 +60,27 @@ public class CrudServices {
                         append(",\n");
             }
         }
-        columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
+        if (dbTable.getJoinColumn() == null) {
+            columnsDefinition.delete(columnsDefinition.length() - 2, columnsDefinition.length());
+        } else {
+            columnsDefinition.append(getJoinColumnDefinition(dbTable));
+        }
         columnsDefinition.append(");\n");
         return columnsDefinition;
+    }
+
+    private String getJoinColumnDefinition(DBTable dbTable) {
+        DBColumn joinColumn = dbTable.getJoinColumn();
+
+        return joinColumn.getName() + " " + joinColumn.getType().getSqlType();
     }
 
     public void initTables(Connection connection) {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
+//            statement.execute(linkSequenceToTable());
+            statement.execute(addForeignKeysWithOneRelation());
             statement.execute(getJoinTablesDefineQuery());
             statement.execute(addManyToManyForeignKeys());
         } catch (SQLException sql) {
@@ -72,11 +88,48 @@ public class CrudServices {
         }
     }
 
+//    private String linkSequenceToTable() {
+//        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
+//        StringBuilder linkQuery = new StringBuilder();
+//        for (DBTable dbTable : tables) {
+//            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
+//                    .append(sequenceList.get(dbTable.getName()))
+//        }
+//        return null;
+//    }
+
+    private String addForeignKeysWithOneRelation() {
+        StringBuilder alterForeignKeysQuery = new StringBuilder();
+        for (DBTable dbTable : tables) {
+            if (dbTable.getJoinColumn() == null) {
+                continue;
+            }
+            alterForeignKeysQuery.append(createAlterForeignKeyQuery(dbTable));
+        }
+        return alterForeignKeysQuery.toString();
+    }
+
+    private String createAlterForeignKeyQuery(DBTable dbTable) {
+        StringBuilder query = new StringBuilder();
+        for (ForeignKey foreignKey : dbTable.getForeignKeys()) {
+            if (foreignKey.getRelationType() == RelationType.ManyToMany) {
+                continue;
+            }
+            query.append("ALTER TABLE ").append(dbTable.getName())
+                    .append(" ADD FOREIGN KEY ")
+                    .append("(").append(dbTable.getJoinColumn().getName()).append(")")
+                    .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";\n");
+        }
+
+        return query.toString();
+    }
+
 
     private String getJoinTablesDefineQuery() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : ManyToManyHandler.getRelationTables()) {
-            builder.append(prepareTableQuery(dbc));
+            builder.append(prepareJoinTableQuery(dbc));
         }
         return builder.toString();
     }
@@ -90,6 +143,7 @@ public class CrudServices {
             }
         }
         return builder.toString();
+
     }
 
     private void createForeignKey(StringBuilder builder, DBTable dbc, ForeignKey fk) {
@@ -112,6 +166,31 @@ public class CrudServices {
                 }
             }
         }
+    }
+
+    private StringBuilder prepareJoinTableQuery(DBTable dbTable) {
+        StringBuilder singleTableQuery = new StringBuilder();
+        //TODO checking on "Drop if exists parameter"
+        singleTableQuery.append("CREATE TABLE ").
+                append(dbTable.getName()).
+                append(" (\n");
+        singleTableQuery.append(getColumnsDefinition(dbTable));
+        singleTableQuery.delete(singleTableQuery.length() - 3, singleTableQuery.length());
+        singleTableQuery.append(",");
+        singleTableQuery.append(getRelationTablePrimaryKey(dbTable.getColumnSet()));
+        return singleTableQuery;
+    }
+
+    private StringBuilder getRelationTablePrimaryKey(Set<DBColumn> columnSet) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(" PRIMARY KEY(");
+        for (DBColumn column : columnSet) {
+            builder.append(column.getName());
+            builder.append(", ");
+        }
+        builder.delete(builder.length() - 2, builder.length());
+        builder.append("));");
+        return builder;
     }
 
     //TODO Read processing section
@@ -145,7 +224,7 @@ public class CrudServices {
         return selectAllById.toString();
     }
 
-    public Set<Object> readEntityByPartialInitializedInstance(Object entity)  {
+    public Set<Object> readEntityByPartialInitializedInstance(Object entity) {
         Class<?> clazz = entity.getClass();
         isEntityCheck(clazz);
         Set<Object> foundedEntities = new HashSet<>();
@@ -236,18 +315,18 @@ public class CrudServices {
         isEntityCheck(clazz);
         DBTable dbTable = getTableByClass(clazz);
         List<DBColumn> columnsOrder = new ArrayList<>();
-        String insertPreparedQuery = buildCreateQuery(dbTable, entity, columnsOrder);
+        String insertPreparedQuery = buildCreateQuery(dbTable, columnsOrder);
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(insertPreparedQuery);
             setStatementValues(preparedStatement, columnsOrder, entity);
             return preparedStatement.execute();
-        } catch (SQLException | IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
+        } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    private String buildCreateQuery(DBTable dbTable, Object entity, List<DBColumn> columnsOrder) {
+    private String buildCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
         StringBuilder insertQuery = new StringBuilder();
         insertQuery.append("INSERT INTO ").
                 append(dbTable.getName()).append("(").
@@ -300,7 +379,7 @@ public class CrudServices {
 
     //TODO Update processing section
 
-    public boolean update(Object entity){
+    public boolean update(Object entity) {
         Class<?> clazz = entity.getClass();
         isEntityCheck(clazz);
         DBTable dbTable = getTableByClass(clazz);
@@ -313,7 +392,7 @@ public class CrudServices {
             PreparedStatement preparedStatement = connection.prepareStatement(updatePreparedQuery);
             setStatementValues(preparedStatement, columnsOrder, entity);
             return preparedStatement.execute();
-        } catch (SQLException | IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
+        } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return false;
@@ -343,7 +422,7 @@ public class CrudServices {
 
     //TODO multitask methods
 
-    private void setStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException, NoSuchMethodException, InstantiationException, InvocationTargetException {
+    private void setStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException {
         for (int i = 0; i < columnsOrder.size(); i++) {
             DBColumn dbc = columnsOrder.get(i);
             Field field = dbc.getField();
@@ -384,7 +463,7 @@ public class CrudServices {
         entityField.set(entity, rs.getObject(columnName));
     }
 
-    private DBTable getTableByClass(Class clazz) {
+    private DBTable getTableByClass(Class<?> clazz) {
         for (DBTable dbt : tables) {
             if (dbt.getMyEntityClass().equals(clazz)) {
                 return dbt;
@@ -397,7 +476,7 @@ public class CrudServices {
 
     private void hasPrimaryKeyCheck(DBTable table) {
         boolean hasPrimaryKey = table.getPrimaryKey() != null;
-        if (!hasPrimaryKey){
+        if (!hasPrimaryKey) {
             throw new IllegalStateException("For this operation Entity should have @Id annotated field");
         }
     }
