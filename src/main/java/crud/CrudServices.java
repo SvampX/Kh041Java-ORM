@@ -79,7 +79,7 @@ public class CrudServices {
         try {
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
-//            statement.execute(linkSequenceToTable());
+            statement.execute(linkSequenceToTable());
             statement.execute(addForeignKeysWithOneRelation());
             statement.execute(getJoinTablesDefineQuery());
             statement.execute(addManyToManyForeignKeys());
@@ -88,15 +88,18 @@ public class CrudServices {
         }
     }
 
-//    private String linkSequenceToTable() {
-//        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
-//        StringBuilder linkQuery = new StringBuilder();
-//        for (DBTable dbTable : tables) {
-//            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
-//                    .append(sequenceList.get(dbTable.getName()))
-//        }
-//        return null;
-//    }
+    private String linkSequenceToTable() {
+        Map<String, String> sequenceList = GeneratedValueHandler.sequences;
+        StringBuilder linkQuery = new StringBuilder();
+        for (DBTable dbTable : tables) {
+            linkQuery.append("ALTER SEQUENCE IF EXISTS ")
+                    .append(sequenceList.get(dbTable.getName()))
+                    .append(" OWNED BY ")
+                    .append(dbTable.getName()).append(".").append(dbTable.getPrimaryKey().getName())
+                    .append(";\n");
+        }
+        return linkQuery.toString();
+    }
 
     private String addForeignKeysWithOneRelation() {
         StringBuilder alterForeignKeysQuery = new StringBuilder();

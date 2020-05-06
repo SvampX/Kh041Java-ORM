@@ -56,12 +56,6 @@ public class TablesInitializationTest {
     }
 
     @Test
-    private void tableRecordCreateTest() {
-
-
-    }
-
-    @Test
     public void eraseTables() {
         boolean dropTablesAfterTest = true;
         StringBuilder dropTablesQuery = new StringBuilder();
