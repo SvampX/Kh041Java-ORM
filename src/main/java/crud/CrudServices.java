@@ -490,6 +490,14 @@ public class CrudServices {
         }
     }
 
+    private boolean hasRelationsCheck(Class<?> clazz) {
+        DBTable dbTable = getTableByClass(clazz);
+        if(dbTable.getForeignKeys().size() > 0){
+            return true;
+        }
+        return false;
+    }
+
     private void isEntityCheck(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(Entity.class)) {
             throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);

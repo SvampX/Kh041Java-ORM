@@ -28,11 +28,6 @@ class CrudServicesTest {
     }
 
     @Test
-    void initTables() {
-        crudServices.initTables(connection);
-    }
-
-    @Test
     void createEntityTest() {
         Phone phone = new Phone();
         phone.setNumber("937-99-92");
@@ -51,7 +46,7 @@ class CrudServicesTest {
     @Test
     void updateEntitiesTest() {
         Phone phone = new Phone();
-        phone.setId(5);
+        phone.setId(2);
         phone.setNumber("5555555");
         crudServices.update(phone);
     }

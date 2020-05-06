@@ -3,7 +3,6 @@ package annotations.handlers.configuration;
 import annotations.Column;
 import annotations.Entity;
 import annotations.GeneratedValue;
-import annotations.GenerationType;
 import annotations.Id;
 import annotations.JoinColumn;
 import annotations.ManyToOne;
