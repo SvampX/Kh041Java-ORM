@@ -21,7 +21,8 @@ public class ExtendedEntity {
     String realName;
 
     @Column(name = "java_object")
-    SimpleEntity simpleEntity;
+    String simpleEntity;
+//    SimpleEntity simpleEntity;
 
     @ManyToMany(tableName = "test", joinColumnsName = "firstId", joinColumnsReferencedName = "name_id")
     Set<SimpleEntity> simpleEntities = new HashSet<>();
@@ -53,11 +54,17 @@ public class ExtendedEntity {
         this.realName = realName;
     }
 
-    public SimpleEntity getSimpleEntity() {
+//    public SimpleEntity getSimpleEntity() {
+//        return simpleEntity;
+//    }
+    public String getSimpleEntity() {
         return simpleEntity;
     }
 
-    public void setSimpleEntity(SimpleEntity simpleEntity) {
+//    public void setSimpleEntity(SimpleEntity simpleEntity) {
+//        this.simpleEntity = simpleEntity;
+//    }
+    public void setSimpleEntity(String simpleEntity) {
         this.simpleEntity = simpleEntity;
     }
 }
