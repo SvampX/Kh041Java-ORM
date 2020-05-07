@@ -59,6 +59,16 @@ public class TablesInitializationTest {
     public void eraseTables() {
         boolean dropTablesAfterTest = true;
         StringBuilder dropTablesQuery = new StringBuilder();
+        String dialect = null;
+        try {
+            dialect = ConnectionToDB.getInstance().getDialect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        assert dialect != null;
+        if(dialect.equalsIgnoreCase("mysql")) {
+            dropTablesQuery.append("SET FOREIGN_KEY_CHECKS=0;\n");
+        }
         List<DBTable> relationTables = ManyToManyHandler.getRelationTables();
         for (DBTable table : tables) {
             dropTablesQuery.append("DROP TABLE IF EXISTS ").

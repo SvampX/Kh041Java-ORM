@@ -2,14 +2,31 @@ package crud;
 
 
 import annotations.Entity;
-import annotations.handlers.*;
+import annotations.handlers.DBColumn;
+import annotations.handlers.DBTable;
+import annotations.handlers.EntityToTableMapper;
+import annotations.handlers.ForeignKey;
+import annotations.handlers.GeneratedValueHandler;
+import annotations.handlers.ManyToManyHandler;
+import annotations.handlers.RelationType;
+import annotations.handlers.Type;
+import connections.ConnectionToDB;
 import exceptions.DataObtainingFailureException;
 import exceptions.Messages;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CrudServices {
@@ -33,7 +50,7 @@ public class CrudServices {
         //TODO checking on "Drop if exists parameter"
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
-                append(" (\n");
+                append(" (\u0020");
         if (hasPrimaryKey) {
             try {
                 singleTableQuery.append(generatedValueHandler.createIdGenerator(dbTable))
@@ -76,10 +93,14 @@ public class CrudServices {
     }
 
     public void initTables(Connection connection) {
+        String dialect;
         try {
+            dialect = ConnectionToDB.getInstance().getDialect();
             Statement statement = connection.createStatement();
             statement.execute(getTablesDefineQuery());
-            statement.execute(linkSequenceToTable());
+            if (dialect.equalsIgnoreCase("postgresql")) {
+                statement.execute(linkSequenceToTable());
+            }
             statement.execute(addForeignKeysWithOneRelation());
             statement.execute(getJoinTablesDefineQuery());
             statement.execute(addManyToManyForeignKeys());
@@ -122,7 +143,8 @@ public class CrudServices {
                     .append(" ADD FOREIGN KEY ")
                     .append("(").append(dbTable.getJoinColumn().getName()).append(")")
                     .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
-                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";\n");
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")")
+                    .append(" ON DELETE CASCADE;\n");
         }
 
         return query.toString();
@@ -172,8 +194,8 @@ public class CrudServices {
     }
 
     private StringBuilder prepareJoinTableQuery(DBTable dbTable) {
-        StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
+        StringBuilder singleTableQuery = new StringBuilder();
         singleTableQuery.append("CREATE TABLE ").
                 append(dbTable.getName()).
                 append(" (\n");

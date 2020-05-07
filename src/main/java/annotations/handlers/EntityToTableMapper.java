@@ -4,9 +4,11 @@ import annotations.Column;
 import annotations.Entity;
 import annotations.Id;
 import annotations.Table;
+import connections.ConnectionToDB;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -121,6 +123,12 @@ public class EntityToTableMapper {
     }
 
     protected static Type getColumnType(Field field) {
+        String dialect = null;
+        try {
+            dialect = ConnectionToDB.getInstance().getDialect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         String fieldType = field.getType().getSimpleName();
         switch (fieldType.toLowerCase()) {
             case "string":
@@ -141,8 +149,15 @@ public class EntityToTableMapper {
                 return Type.CHARACTER;
             case "boolean":
                 return Type.BOOLEAN;
+            case "date":
+                return Type.DATE;
+            case "time":
+                return Type.TIME;
+            case "timestamp":
+                return Type.TIMESTAMP;
             default:
-                return Type.OTHER;
+                assert dialect != null;
+                return dialect.equalsIgnoreCase("mysql") ? Type.MYSQL_OTHER : Type.POSTGRES_OTHER;
         }
     }
 
