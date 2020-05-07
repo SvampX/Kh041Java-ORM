@@ -143,7 +143,8 @@ public class CrudServices {
                     .append(" ADD FOREIGN KEY ")
                     .append("(").append(dbTable.getJoinColumn().getName()).append(")")
                     .append(" REFERENCES ").append(foreignKey.getOtherTable().getName())
-                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")").append(";\n");
+                    .append("(").append(foreignKey.getOtherTableKey().getName()).append(")")
+                    .append(" ON DELETE CASCADE;\n");
         }
 
         return query.toString();
