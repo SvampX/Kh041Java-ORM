@@ -20,9 +20,10 @@ public class ExtendedEntity {
     @Column(name = "real_name")
     String realName;
 
+    /*@Column(name = "java_object")
+    String simpleEntity;*/
     @Column(name = "java_object")
-    String simpleEntity;
-//    SimpleEntity simpleEntity;
+    SimpleEntity simpleEntity;
 
     @ManyToMany(tableName = "test", joinColumnsName = "firstId", joinColumnsReferencedName = "name_id")
     Set<SimpleEntity> simpleEntities = new HashSet<>();
@@ -54,17 +55,17 @@ public class ExtendedEntity {
         this.realName = realName;
     }
 
-//    public SimpleEntity getSimpleEntity() {
-//        return simpleEntity;
-//    }
-    public String getSimpleEntity() {
+    public SimpleEntity getSimpleEntity() {
         return simpleEntity;
     }
-
-//    public void setSimpleEntity(SimpleEntity simpleEntity) {
-//        this.simpleEntity = simpleEntity;
+//    public String getSimpleEntity() {
+//        return simpleEntity;
 //    }
-    public void setSimpleEntity(String simpleEntity) {
+
+    public void setSimpleEntity(SimpleEntity simpleEntity) {
         this.simpleEntity = simpleEntity;
     }
+    /*public void setSimpleEntity(String simpleEntity) {
+        this.simpleEntity = simpleEntity;
+    }*/
 }
