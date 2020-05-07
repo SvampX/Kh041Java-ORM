@@ -29,7 +29,7 @@ class EntityToTableMapperTest {
         }
         dbTables = EntityToTableMapper.getTables();
         extendedColumnsNames = Set.of("name_id", "user_name", "real_name", "java_object");
-        extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
+        //extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
         simpleColumnsNames = Set.of("id", "userName");
     }
 

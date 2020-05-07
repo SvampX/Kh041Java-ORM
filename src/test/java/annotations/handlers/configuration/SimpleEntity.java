@@ -2,6 +2,7 @@ package annotations.handlers.configuration;
 
 import annotations.*;
 
+import java.sql.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,9 @@ public class SimpleEntity {
 
     @ManyToMany(tableName = "test", inverseJoinColumnsName = "secondId", inverseJoinColumnsReferencedName = "id")
     Set<ExtendedEntity> extendedEntities = new HashSet<>();
+
+    @Column(name = "today_date")
+    Date todayDate;
 
     public SimpleEntity() {
     }
