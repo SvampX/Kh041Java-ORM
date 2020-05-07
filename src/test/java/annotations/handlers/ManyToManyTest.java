@@ -22,6 +22,7 @@ public class ManyToManyTest {
         ManyToManyHandler.createJoinTables();
 
         Set<DBTable> tables = EntityToTableMapper.getTables();
+        tables.addAll(ManyToManyHandler.getRelationTables());
         DBTable joinTable = new DBTable();
         DBTable extendedEntityTable = new DBTable();
         DBTable simpleEntityTable = new DBTable();

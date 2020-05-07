@@ -2,6 +2,7 @@ package annotations.handlers.configuration;
 
 import annotations.*;
 
+import java.sql.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,8 @@ import java.util.Set;
 public class SimpleEntity {
 
     @Id
+    @SequenceGenerator(name = "genesis", initialValue = 42, allocationSize = 2)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genesis")
     @Column(name = "id")
     int nameId;
 
@@ -18,6 +21,9 @@ public class SimpleEntity {
 
     @ManyToMany(tableName = "test", inverseJoinColumnsName = "secondId", inverseJoinColumnsReferencedName = "id")
     Set<ExtendedEntity> extendedEntities = new HashSet<>();
+
+    @Column(name = "today_date")
+    Date todayDate;
 
     public SimpleEntity() {
     }
@@ -36,5 +42,13 @@ public class SimpleEntity {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleEntity{" +
+                "nameId=" + nameId +
+                ", userName='" + userName + '\'' +
+                '}';
     }
 }

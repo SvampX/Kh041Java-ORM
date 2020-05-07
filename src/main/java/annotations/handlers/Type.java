@@ -10,14 +10,19 @@ public enum Type {
     BIGDECIMAL("NUMERIC"),
     CHARACTER("CHAR(1)"),
     BOOLEAN("BOOLEAN"),
-    OTHER("BYTEA");
+    TIME("TIME"),
+    DATE("DATE"),
+    TIMESTAMP("TIMESTAMP"),
+    MYSQL_OTHER("BLOB"),
+    POSTGRES_OTHER("BYTEA");
+
     private String sqlType;
 
     Type(String sqlType) {
         this.sqlType = sqlType;
     }
 
-    public String getSqlType(){
+    public String getSqlType() {
         return sqlType;
     }
-    }
+}

@@ -23,13 +23,13 @@ class EntityToTableMapperTest {
     @BeforeAll
     void initContext() {
         try {
-            ConnectionToDB contextInitPoint= ConnectionToDB.getInstance();
+            ConnectionToDB contextInitPoint = ConnectionToDB.getInstance();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
         dbTables = EntityToTableMapper.getTables();
         extendedColumnsNames = Set.of("name_id", "user_name", "real_name", "java_object");
-        extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
+        //extendedColumnsTypes = Set.of(Type.STRING, Type.INTEGER, Type.OTHER);
         simpleColumnsNames = Set.of("id", "userName");
     }
 
@@ -67,5 +67,14 @@ class EntityToTableMapperTest {
         assertEquals("INTEGER", Type.INTEGER.getSqlType());
         assertEquals(ExtendedEntity.class, extendedTable.getMyEntityClass());
         System.out.println("extendedTable = " + extendedTable);
+    }
+
+    @Test
+    void sandbox() {
+        String test = "text";
+        int i = 999;
+        Object object = test;
+        object = i;
+        System.out.println("object = " + object);
     }
 }

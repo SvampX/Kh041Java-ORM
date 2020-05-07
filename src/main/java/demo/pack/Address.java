@@ -1,13 +1,7 @@
-package annotations.handlers.configuration;
+package demo.pack;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.GeneratedValue;
-import annotations.GenerationType;
-import annotations.Id;
-import annotations.JoinColumn;
-import annotations.ManyToOne;
-import annotations.Table;
+import annotations.*;
+
 
 @Entity
 @Table(name = "addresses")
@@ -93,5 +87,18 @@ public class Address {
 
     public void setUserDetails(User userDetails) {
         this.userDetails = userDetails;
+    }
+
+    @Override
+    public String toString() {
+        return "Address{" +
+                "id=" + id +
+                ", city='" + city + '\'' +
+                ", country='" + country + '\'' +
+                ", streetName='" + streetName + '\'' +
+                ", postalCode='" + postalCode + '\'' +
+                ", type='" + type + '\'' +
+                ", userDetails=" + userDetails +
+                '}';
     }
 }

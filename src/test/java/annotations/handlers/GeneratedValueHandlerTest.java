@@ -53,9 +53,14 @@ class GeneratedValueHandlerTest {
     }
 
     @AfterEach
-    void cleanUp() throws DBException {
-        dropSequence("table_name_id_seq");
-        dropSequence("user_gen_seq");
+    void cleanUp() {
+        GeneratedValueHandler.sequences.forEach((key, value) -> {
+            try {
+                dropSequence(value);
+            } catch (DBException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void dropSequence (String sequence) throws DBException {

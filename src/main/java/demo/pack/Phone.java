@@ -1,12 +1,6 @@
-package annotations.handlers.configuration;
+package demo.pack;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.GeneratedValue;
-import annotations.Id;
-import annotations.JoinColumn;
-import annotations.OneToOne;
-import annotations.Table;
+import annotations.*;
 
 @Entity
 @Table(name = "phones")
@@ -53,7 +47,7 @@ public class Phone {
 
     @Override
     public String toString() {
-        return "Phone{" +
+        return "annotations.more.packages.pack.Phone{" +
                 "id=" + id +
                 ", number='" + number + '\'' +
                 '}';

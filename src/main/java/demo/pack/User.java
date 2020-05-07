@@ -1,4 +1,4 @@
-package annotations.handlers.configuration;
+package demo.pack;
 
 import annotations.*;
 
@@ -80,7 +80,7 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{" +
+        return "annotations.more.packages.pack.User{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +

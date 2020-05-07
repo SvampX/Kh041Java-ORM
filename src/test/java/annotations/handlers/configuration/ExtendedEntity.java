@@ -1,10 +1,6 @@
 package annotations.handlers.configuration;
 
-import annotations.Column;
-import annotations.Entity;
-import annotations.GeneratedValue;
-import annotations.Id;
-import annotations.Table;
+import annotations.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +20,8 @@ public class ExtendedEntity {
     @Column(name = "real_name")
     String realName;
 
+    /*@Column(name = "java_object")
+    String simpleEntity;*/
     @Column(name = "java_object")
     SimpleEntity simpleEntity;
 
@@ -60,8 +58,14 @@ public class ExtendedEntity {
     public SimpleEntity getSimpleEntity() {
         return simpleEntity;
     }
+//    public String getSimpleEntity() {
+//        return simpleEntity;
+//    }
 
     public void setSimpleEntity(SimpleEntity simpleEntity) {
         this.simpleEntity = simpleEntity;
     }
+    /*public void setSimpleEntity(String simpleEntity) {
+        this.simpleEntity = simpleEntity;
+    }*/
 }

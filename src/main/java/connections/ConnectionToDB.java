@@ -33,23 +33,18 @@ public class ConnectionToDB {
     }
 
     private ConnectionToDB() throws SQLException {
-        initContext();
+        getUsersMetadata();
         for (int i = 0; i < defaultConNumber; i++)
             availableConList.add(createConnection());
     }
 
-    public static void initContext() {
+    public static void getUsersMetadata() {
         StackTraceElement e[] = Thread.currentThread().getStackTrace();
         String callingClassName = e[4].getClassName();
         System.out.println(callingClassName);
-        try {
-            Class clazz = Class.forName(callingClassName);
-        } catch (ClassNotFoundException classNotFoundException) {
-            classNotFoundException.printStackTrace();
-        }
         Reflections reflections;
         try {
-            reflections = new Reflections(Class.forName("annotations.handlers.EntityToTableMapperTest"));
+            reflections = new Reflections(Class.forName(callingClassName));
             EntityHandler.setReflections(reflections);
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
@@ -58,7 +53,8 @@ public class ConnectionToDB {
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;
-        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
+        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+//        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
             input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {

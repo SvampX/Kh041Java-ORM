@@ -86,7 +86,7 @@ public class RelationsWithOneHandler {
         String columnName = getJoinColumnName(field, relationTable);
         joinDBColumn.setField(relationTable.getPrimaryKey().getField());
         joinDBColumn.setName(columnName);
-        joinDBColumn.setType(EntityToTableMapper.getColumnType(field));
+        joinDBColumn.setType(EntityToTableMapper.getColumnType(relationTable.getPrimaryKey().getField()));
         currentTable.setJoinColumn(joinDBColumn);
     }
 
