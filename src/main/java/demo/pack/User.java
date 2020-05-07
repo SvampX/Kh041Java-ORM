@@ -2,6 +2,7 @@ package demo.pack;
 
 import annotations.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,8 +32,8 @@ public class User {
     @OneToMany(mappedBy = "userDetails")
     private List<Address> addresses;
 
-   // @ManyToMany(tableName = "person_car", joinColumnsName = "person_id", joinColumnsReferencedName = "user_id")
-   // public List<Car> myCars = new ArrayList<>();
+    @ManyToMany(tableName = "person_car", joinColumnsName = "person_id", joinColumnsReferencedName = "user_id")
+    public List<Car> myCars = new ArrayList<>();
 
     public User() {
     }

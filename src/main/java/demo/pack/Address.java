@@ -88,4 +88,17 @@ public class Address {
     public void setUserDetails(User userDetails) {
         this.userDetails = userDetails;
     }
+
+    @Override
+    public String toString() {
+        return "Address{" +
+                "id=" + id +
+                ", city='" + city + '\'' +
+                ", country='" + country + '\'' +
+                ", streetName='" + streetName + '\'' +
+                ", postalCode='" + postalCode + '\'' +
+                ", type='" + type + '\'' +
+                ", userDetails=" + userDetails +
+                '}';
+    }
 }

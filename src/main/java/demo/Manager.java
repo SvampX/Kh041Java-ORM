@@ -20,11 +20,6 @@ public class Manager {
     private Manager() throws SQLException {
         connectionToDB = ConnectionToDB.getInstance();
         crudServices = new CrudServices();
-        Set<DBTable> tables = EntityToTableMapper.getTables();
-        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
-        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
-        //Connection connection = connectionToDB.getConnection();
-        crudServices.initTables(connectionToDB.getConnection());
         crudServices.setConnection(connectionToDB.getConnection());
     }
 
@@ -33,6 +28,13 @@ public class Manager {
             instance = new Manager();
         }
         return instance;
+    }
+
+    public void startWork() {
+        Set<DBTable> tables = EntityToTableMapper.getTables();
+        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
+        crudServices.initTables(connectionToDB.getConnection());
     }
 
     public Object get(Object objectId, Class<?> clazz) {
@@ -48,6 +50,7 @@ public class Manager {
     }
 
     public void update(Object object) {
+
         crudServices.update(object);
     }
 
