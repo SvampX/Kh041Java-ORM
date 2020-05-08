@@ -1,12 +1,9 @@
 package Manager;
 
 
-
-
+import Manager.pack.Car;
 import Manager.pack.Phone;
 import Manager.pack.User;
-import crud.CrudServices;
-import crud.RelationsLoader;
 
 import java.sql.SQLException;
 import java.util.Set;
@@ -15,45 +12,72 @@ public class Demo {
 
     public static void main(String[] args) throws SQLException {
 
-            Manager manager = Manager.getInstance();
-            System.out.println("manager worked");
-
-        Phone phone = new Phone();
-        phone.setNumber("12-12-121");
+        Manager manager = Manager.getInstance();
+        manager.start();
         User user = new User();
-        user.setAge(12);
-        user.setFirstName("Bodya");
-        user.setLastName("Angazalka");
-        user.setPhone(phone);
-        phone.setUser(user);
 
-        manager.add(phone);
-        manager.addLinkedObject(user);
+        initOneToOneObjects(user);
+        manager.add(user);
+        user.setFirstName("Billy");
+        manager.add(user);
+        user.setLastName("Milligan");
+        manager.add(user.getCar());
+
+        manager.addWithRelations(user);
+        manager.addWithRelations(user);
+
+        Set<Object> users = manager.readAll(User.class);
+        Set<Object> cars = manager.readAll(Car.class);
+        Set<Object> phones = manager.readAll(Phone.class);
+
+        System.out.println("-------------------------------------------------");
+
+        showEntitiesCollections(users);
+        showEntitiesCollections(cars);
+        showEntitiesCollections(phones);
+
+        System.out.println("-------------------------------------------------");
+
+        User randomUser = (User) users.iterator().next();
+        System.out.println("Id = " + randomUser.getId());
+        randomUser.setFirstName("Bruce");
+        randomUser.setLastName("Vayne");
+        randomUser.setAge(40);
 
 
-      /*  Phone readedPhone = (Phone) manager.read(1, Phone.class);
-        System.out.println("Phone = " + readedPhone);
-        Set<Object> entities = manager.readAll(Phone.class);
-        System.out.println("\n All entities from phone table");
-        entities.forEach(System.out::println);
+        manager.update(randomUser);
+        users = manager.readAll(User.class);
+        showEntitiesCollections(users);
 
-        Phone phone = new Phone();
-        phone.setId(2);
-        phone.setNumber("546846");
-        manager.update(phone);
+        System.out.println("-------------------------------------------------");
 
-        int id = 3;
-        manager.delete(id, Phone.class);
+        manager.delete(2, User.class);
+        users = manager.readAll(User.class);
+        showEntitiesCollections(users);
+
+        manager.clean();
+    }
+
+    private static void showEntitiesCollections(Set<Object> entities) {
+        System.out.println();
+        for (Object obj : entities) {
+            System.out.println("entity = " + obj);
+        }
+        System.out.println();
+    }
+
+    private static void initOneToOneObjects(User user) {
+        user.setFirstName("Alex");
+        user.setLastName("Lens");
+        user.setAge(25);
 
         Phone phone = new Phone();
         phone.setNumber("937-99-92");
-        Set<Object> phoneSet;
-        phoneSet = manager.readEntityByPartialInitializedInstance(phone);
-        phoneSet.forEach(phon -> {
-            System.out.println("id = " + ((Phone) phon).getId() + "   " + ((Phone) phon).getNumber());
-        });*/
+        phone.setUser(user);
+        user.setPhone(phone);
 
-
-
+        Car car = new Car("DEAWO", "DE-937-99-92-WO");
+        car.setUser(user);
+        user.setCar(car);
     }
 }

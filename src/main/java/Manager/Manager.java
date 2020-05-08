@@ -1,14 +1,13 @@
 package Manager;
 
-import annotations.handlers.DBTable;
-import annotations.handlers.EntityHandler;
-import annotations.handlers.EntityToTableMapper;
-import annotations.handlers.RelationsWithOneHandler;
+import annotations.handlers.*;
 import connections.ConnectionToDB;
 import crud.CrudServices;
 import crud.RelationsLoader;
 
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
 import java.util.Set;
 
 public class Manager {
@@ -18,16 +17,14 @@ public class Manager {
     private ConnectionToDB connectionToDB;
     private CrudServices crudServices;
     RelationsLoader relationsLoader;
+    Set<DBTable> tables;
 
     private Manager() throws SQLException {
         connectionToDB = ConnectionToDB.getInstance();
         crudServices = new CrudServices();
-        relationsLoader = new RelationsLoader();
-        Set<DBTable> tables = EntityToTableMapper.getTables();
-        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
-        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
-        crudServices.initTables(connectionToDB.getConnection());
         crudServices.setConnection(connectionToDB.getConnection());
+        relationsLoader = new RelationsLoader();
+        tables = EntityToTableMapper.getTables();
     }
 
     public static synchronized Manager getInstance() throws SQLException {
@@ -35,6 +32,39 @@ public class Manager {
             instance = new Manager();
         }
         return instance;
+    }
+
+    public void start() {
+        RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+        relationsWithOneHandler.handle(EntityHandler.getEntitiesSet());
+        crudServices.initTables(connectionToDB.getConnection());
+    }
+
+    public void clean() {
+        StringBuilder dropTablesQuery = new StringBuilder();
+        String dialect = null;
+        try {
+            dialect = ConnectionToDB.getInstance().getDialect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        assert dialect != null;
+        if (dialect.equalsIgnoreCase("mysql")) {
+            dropTablesQuery.append("SET FOREIGN_KEY_CHECKS=0;\n");
+        }
+        List<DBTable> relationTables = ManyToManyHandler.getRelationTables();
+        for (DBTable table : tables) {
+            dropTablesQuery.append("DROP TABLE IF EXISTS ").append(table.getName()).append(" CASCADE;\n");
+        }
+        for (DBTable table : relationTables) {
+            dropTablesQuery.append("DROP TABLE IF EXISTS ").append(table.getName()).append(" CASCADE;\n");
+        }
+        try {
+            Statement statement = connectionToDB.getConnection().createStatement();
+            statement.execute(dropTablesQuery.toString());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object read(Object objectId, Class<?> clazz) {
@@ -52,7 +82,7 @@ public class Manager {
         crudServices.create(object);
 
     }
-    public void addLinkedObject(Object object){
+    public void addWithRelations(Object object){
         relationsLoader.create(object);
     }
 

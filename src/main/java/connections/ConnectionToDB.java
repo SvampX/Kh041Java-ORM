@@ -19,7 +19,7 @@ import java.util.Properties;
 public class ConnectionToDB {
 
     private List<Connection> availableConList = new ArrayList<>();
-    private List<Connection> unvailableConList = new ArrayList<>();
+    private List<Connection> unviableConList = new ArrayList<>();
     private int defaultConNumber = 10;
     String driver = "";
 
@@ -40,7 +40,7 @@ public class ConnectionToDB {
 
     public static void getUsersMetadata() {
         StackTraceElement e[] = Thread.currentThread().getStackTrace();
-        String callingClassName = e[4].getClassName();
+        String callingClassName = e[6].getClassName();
         System.out.println(callingClassName);
         Reflections reflections;
         try {
@@ -53,8 +53,8 @@ public class ConnectionToDB {
 
     private Connection createConnection() throws SQLException {
         InputStream input = null;
-//        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
-        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
+        final URL resource = this.getClass().getClassLoader().getResource("config.properties");
+//        final URL resource = this.getClass().getClassLoader().getResource("test.properties");
         try {
             input = new FileInputStream(resource.getPath());
         } catch (FileNotFoundException e) {
@@ -87,18 +87,18 @@ public class ConnectionToDB {
         Connection con;
         if (availableConList.size() > 0) {
             con = availableConList.get(0);
-            unvailableConList.add(con);
+            unviableConList.add(con);
             availableConList.remove(con);
         } else {
             con = getConnection();
-            unvailableConList.add(con);
+            unviableConList.add(con);
         }
         return con;
     }
 
     public void releaseConnection(Connection con) {
         availableConList.add(con);
-        unvailableConList.remove(con);
+        unviableConList.remove(con);
     }
     public String getDialect(){
         return driver.split("\\.")[1];

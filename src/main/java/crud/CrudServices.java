@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class CrudServices {
     Set<DBTable> tables = EntityToTableMapper.getTables();
     Connection connection;
+    private int numberGenerator = 0;
 
     //TODO Tables definition section
 
@@ -319,15 +320,59 @@ public class CrudServices {
         isEntityCheck(clazz);
         DBTable dbTable = getTableByClass(clazz);
         List<DBColumn> columnsOrder = new ArrayList<>();
-        String insertPreparedQuery = buildCreateQuery(dbTable, columnsOrder);
+        String insertPreparedQuery = buildCreateQueryWithReturningId(dbTable, columnsOrder);
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(insertPreparedQuery);
             setStatementValues(preparedStatement, columnsOrder, entity);
-            return preparedStatement.execute();
+            ResultSet resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            Object id = resultSet.getObject(1);
+            setObjectId(entity, id);
+            return true;
         } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return false;
+    }
+    private void setObjectId(Object entity, Object id){
+        DBTable table = getTableByClass(entity.getClass());
+        Field pk = table.getPrimaryKey().getField();
+        pk.setAccessible(true);
+        try {
+            pk.set(entity,id);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected String buildCreateQueryWithReturningId(DBTable dbTable, List<DBColumn> columnsOrder) {
+        StringBuilder insertQuery = new StringBuilder();
+        String insName = "ins" + getNumber(false);
+        insertQuery.append("WITH ").
+                append(insName).
+                append(" AS (").
+                append(" INSERT INTO ").
+                append(dbTable.getName()).append("(").
+                append(prepareColumnsForCreateQuery(dbTable, columnsOrder)).
+                append(") VALUES(").
+                append("?,".repeat(columnsOrder.size())).
+                delete(insertQuery.length() - 1, insertQuery.length()).
+                append(")").
+                append("\n RETURNING ").
+                append(dbTable.getPrimaryKey().getName()).
+                append(" ) ").append("SELECT ").
+                append(dbTable.getPrimaryKey().getName()).
+                append(" FROM ").
+                append(insName);
+        return insertQuery.toString();
+    }
+
+    private int getNumber(boolean reset) {
+        if (reset) {
+            numberGenerator = 0;
+        }
+        numberGenerator++;
+        return numberGenerator;
     }
 
     protected String buildCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {

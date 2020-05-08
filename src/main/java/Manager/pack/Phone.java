@@ -7,7 +7,8 @@ import annotations.*;
 public class Phone {
 
     @Id
-    @GeneratedValue
+    @SequenceGenerator(name = "phone_seq",initialValue = 42, allocationSize = 4)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "phone_seq")
     @Column(name = "phone_id")
     private int id;
 
@@ -47,7 +48,7 @@ public class Phone {
 
     @Override
     public String toString() {
-        return "annotations.more.packages.pack.Phone{" +
+        return "Phone{" +
                 "id=" + id +
                 ", number='" + number + '\'' +
                 '}';

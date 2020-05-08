@@ -45,13 +45,14 @@ public class RelationsLoader {
         isEntityCheck(clazz);
         DBTable table = getTableByClass(clazz);
         Map<ForeignKey, Field> lazyFields = getLazyFields(table);
-        if (lazyFields.size() == 0 && table.getForeignKeys().size() == 0) {
-            return crudServices.create(entity);
-        }
-        if (lazyFields.size() == 0) {
-            return createOneToOne(entity);
-        }
-        return createWithMany(entity, lazyFields);
+        return createOneToOne(entity);
+//        if (lazyFields.size() == 0 && table.getForeignKeys().size() == 0) {
+//            return crudServices.create(entity);
+//        }
+//        if (lazyFields.size() == 0) {
+//            return createOneToOne(entity);
+//        }
+//        return createWithMany(entity, lazyFields);
     }
 
     private boolean createWithMany(Object entity, Map<ForeignKey, Field> lazyFields) {
