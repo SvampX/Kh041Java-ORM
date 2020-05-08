@@ -36,6 +36,9 @@ public class EntityToTableMapper {
     public static Set<DBTable> getTables() {
         if (tables == null) {
             tables = mapTablesFromEntities();
+            ManyToManyHandler.createJoinTables();
+            RelationsWithOneHandler relationsWithOneHandler = new RelationsWithOneHandler();
+            relationsWithOneHandler.handle(entitiesSet);
         }
         return tables;
     }

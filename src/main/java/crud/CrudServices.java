@@ -18,7 +18,7 @@ public class CrudServices {
 
     //TODO Tables definition section
 
-    private String getTablesDefineQuery() {
+    protected String getTablesDefineQuery() {
         StringBuilder tablesDefineQuery = new StringBuilder();
         for (DBTable dbc : tables) {
             tablesDefineQuery.append(prepareTableQuery(dbc));
@@ -26,7 +26,7 @@ public class CrudServices {
         return tablesDefineQuery.toString();
     }
 
-    private StringBuilder prepareTableQuery(DBTable dbTable) {
+    protected StringBuilder prepareTableQuery(DBTable dbTable) {
         boolean hasPrimaryKey = dbTable.getPrimaryKey() != null;
         GeneratedValueHandler generatedValueHandler = new GeneratedValueHandler();
         StringBuilder singleTableQuery = new StringBuilder();
@@ -46,7 +46,7 @@ public class CrudServices {
         return singleTableQuery;
     }
 
-    private StringBuilder getColumnsDefinition(DBTable dbTable) {
+    protected StringBuilder getColumnsDefinition(DBTable dbTable) {
         StringBuilder columnsDefinition = new StringBuilder();
         for (DBColumn dbc : dbTable.getColumnSet()) {
             columnsDefinition.append(dbc.getName()).
@@ -69,7 +69,7 @@ public class CrudServices {
         return columnsDefinition;
     }
 
-    private String getJoinColumnDefinition(DBTable dbTable) {
+    protected String getJoinColumnDefinition(DBTable dbTable) {
         DBColumn joinColumn = dbTable.getJoinColumn();
 
         return joinColumn.getName() + " " + joinColumn.getType().getSqlType();
@@ -88,7 +88,7 @@ public class CrudServices {
         }
     }
 
-    private String linkSequenceToTable() {
+    protected String linkSequenceToTable() {
         Map<String, String> sequenceList = GeneratedValueHandler.sequences;
         StringBuilder linkQuery = new StringBuilder();
         for (DBTable dbTable : tables) {
@@ -101,7 +101,7 @@ public class CrudServices {
         return linkQuery.toString();
     }
 
-    private String addForeignKeysWithOneRelation() {
+    protected String addForeignKeysWithOneRelation() {
         StringBuilder alterForeignKeysQuery = new StringBuilder();
         for (DBTable dbTable : tables) {
             if (dbTable.getJoinColumn() == null) {
@@ -112,7 +112,7 @@ public class CrudServices {
         return alterForeignKeysQuery.toString();
     }
 
-    private String createAlterForeignKeyQuery(DBTable dbTable) {
+    protected String createAlterForeignKeyQuery(DBTable dbTable) {
         StringBuilder query = new StringBuilder();
         for (ForeignKey foreignKey : dbTable.getForeignKeys()) {
             if (foreignKey.getRelationType() == RelationType.ManyToMany) {
@@ -129,7 +129,7 @@ public class CrudServices {
     }
 
 
-    private String getJoinTablesDefineQuery() {
+    protected String getJoinTablesDefineQuery() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : ManyToManyHandler.getRelationTables()) {
             builder.append(prepareJoinTableQuery(dbc));
@@ -138,7 +138,7 @@ public class CrudServices {
     }
 
 
-    private String addManyToManyForeignKeys() {
+    protected String addManyToManyForeignKeys() {
         StringBuilder builder = new StringBuilder();
         for (DBTable dbc : tables) {
             for (ForeignKey fk : dbc.getForeignKeys()) {
@@ -149,7 +149,7 @@ public class CrudServices {
 
     }
 
-    private void createForeignKey(StringBuilder builder, DBTable dbc, ForeignKey fk) {
+    protected void createForeignKey(StringBuilder builder, DBTable dbc, ForeignKey fk) {
         if (fk.isHasRelationsTable()) {
             for (ForeignKey relationTableKey : fk.getOtherTable().getForeignKeys()) {
                 if (relationTableKey.getOtherTable() == dbc) {
@@ -171,7 +171,7 @@ public class CrudServices {
         }
     }
 
-    private StringBuilder prepareJoinTableQuery(DBTable dbTable) {
+    protected StringBuilder prepareJoinTableQuery(DBTable dbTable) {
         StringBuilder singleTableQuery = new StringBuilder();
         //TODO checking on "Drop if exists parameter"
         singleTableQuery.append("CREATE TABLE ").
@@ -184,7 +184,7 @@ public class CrudServices {
         return singleTableQuery;
     }
 
-    private StringBuilder getRelationTablePrimaryKey(Set<DBColumn> columnSet) {
+    protected StringBuilder getRelationTablePrimaryKey(Set<DBColumn> columnSet) {
         StringBuilder builder = new StringBuilder();
         builder.append(" PRIMARY KEY(");
         for (DBColumn column : columnSet) {
@@ -217,7 +217,7 @@ public class CrudServices {
         return entity;
     }
 
-    private String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
+    protected String createSelectAllByPrimaryKeyQuery(DBTable dbTable) {
         StringBuilder selectAllById = new StringBuilder();
         selectAllById.append("SELECT * FROM ").
                 append(dbTable.getName()).
@@ -266,7 +266,7 @@ public class CrudServices {
     }
 
 
-    private Set<Field> getNotNullFields(Object entity, Class<?> clazz) {
+    protected Set<Field> getNotNullFields(Object entity, Class<?> clazz) {
         return Arrays.stream(clazz.getDeclaredFields()).
                 peek(field -> field.setAccessible(true)).
                 filter(field -> {
@@ -279,7 +279,8 @@ public class CrudServices {
                 }).collect(Collectors.toSet());
     }
 
-    private void fillEntitiesFromResultSet(DBTable dbTable, ResultSet resultSet, Set<Object> foundedEntities) throws SQLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    protected void fillEntitiesFromResultSet(DBTable dbTable, ResultSet resultSet, Set<Object> foundedEntities)
+            throws SQLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Object entity = null;
         while (!resultSet.isAfterLast()) {
             entity = dbTable.getMyEntityClass().getConstructor().newInstance();
@@ -289,7 +290,7 @@ public class CrudServices {
         foundedEntities.remove(entity);
     }
 
-    private String getReadByColumnsValuesQuery(DBTable dbTable, List<DBColumn> readQueryColumns) {
+    protected String getReadByColumnsValuesQuery(DBTable dbTable, List<DBColumn> readQueryColumns) {
         StringBuilder readQuery = new StringBuilder();
         readQuery.append("SELECT * FROM ").
                 append(dbTable.getName()).append(" WHERE ");
@@ -301,7 +302,7 @@ public class CrudServices {
         return readQuery.toString();
     }
 
-    private List<DBColumn> getReadQueryColumns(Set<Field> notNullFields, DBTable table) {
+    protected List<DBColumn> getReadQueryColumns(Set<Field> notNullFields, DBTable table) {
         List<DBColumn> columns = new ArrayList<>();
         for (DBColumn dbc : table.getColumnSet()) {
             if (notNullFields.contains(dbc.getField())) {
@@ -329,7 +330,7 @@ public class CrudServices {
         return false;
     }
 
-    private String buildCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
+    protected String buildCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
         StringBuilder insertQuery = new StringBuilder();
         insertQuery.append("INSERT INTO ").
                 append(dbTable.getName()).append("(").
@@ -341,7 +342,7 @@ public class CrudServices {
         return insertQuery.toString();
     }
 
-    private StringBuilder prepareColumnsForCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
+    protected StringBuilder prepareColumnsForCreateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
         StringBuilder columnNames = new StringBuilder();
         for (DBColumn dbc : dbTable.getColumnSet()) {
             columnNames.append(dbc.getName()).append(", ");
@@ -368,7 +369,7 @@ public class CrudServices {
         return false;
     }
 
-    private String buildDeleteQuery(Object id, DBTable table) {
+    protected String buildDeleteQuery(Object id, DBTable table) {
         StringBuilder deleteQuery = new StringBuilder();
         deleteQuery.append("DELETE FROM ").
                 append(table.getName()).
@@ -401,7 +402,7 @@ public class CrudServices {
         return false;
     }
 
-    private String buildUpdateQuery(DBTable dbTable, Object id, List<DBColumn> columnsOrder) {
+    protected String buildUpdateQuery(DBTable dbTable, Object id, List<DBColumn> columnsOrder) {
         StringBuilder updateQuery = new StringBuilder();
         updateQuery.append("UPDATE ").
                 append(dbTable.getName()).
@@ -413,7 +414,7 @@ public class CrudServices {
         return updateQuery.toString();
     }
 
-    private StringBuilder prepareColumnsForUpdateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
+    protected StringBuilder prepareColumnsForUpdateQuery(DBTable dbTable, List<DBColumn> columnsOrder) {
         StringBuilder columnNames = new StringBuilder();
         for (DBColumn dbc : dbTable.getColumnSet()) {
             columnNames.append(dbc.getName()).append(" = ?, ");
@@ -425,7 +426,7 @@ public class CrudServices {
 
     //TODO multitask methods
 
-    private void setStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException {
+    protected void setStatementValues(PreparedStatement preparedStatement, List<DBColumn> columnsOrder, Object entity) throws IllegalAccessException, SQLException {
         for (int i = 0; i < columnsOrder.size(); i++) {
             DBColumn dbc = columnsOrder.get(i);
             Field field = dbc.getField();
@@ -434,7 +435,7 @@ public class CrudServices {
         }
     }
 
-    private void fillObjectFieldsFromTable(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
+    protected void fillObjectFieldsFromTable(Object entity, DBTable table, ResultSet rs) throws SQLException, IllegalAccessException {
         boolean hasPrimaryKey = table.getPrimaryKey() != null;
         if (rs.next()) {
             if (hasPrimaryKey) {
@@ -446,7 +447,7 @@ public class CrudServices {
         }
     }
 
-    private void fillPrimaryKeyField(Object entity, DBTable table, ResultSet rs) throws IllegalAccessException, SQLException {
+    protected void fillPrimaryKeyField(Object entity, DBTable table, ResultSet rs) throws IllegalAccessException, SQLException {
         String pkType = table.getPrimaryKey().getField().getType().getSimpleName();
         String pkName = table.getPrimaryKey().getName();
         if (pkType.equals("Integer") || pkType.equals("int")) {
@@ -460,13 +461,13 @@ public class CrudServices {
         }
     }
 
-    private void fillSimpleField(Object entity, DBColumn dbColumn, ResultSet rs) throws IllegalAccessException, SQLException {
+    protected void fillSimpleField(Object entity, DBColumn dbColumn, ResultSet rs) throws IllegalAccessException, SQLException {
         Field entityField = dbColumn.getField();
         String columnName = dbColumn.getName();
         entityField.set(entity, rs.getObject(columnName));
     }
 
-    private DBTable getTableByClass(Class<?> clazz) {
+    public DBTable getTableByClass(Class<?> clazz) {
         for (DBTable dbt : tables) {
             if (dbt.getMyEntityClass().equals(clazz)) {
                 return dbt;
@@ -477,20 +478,20 @@ public class CrudServices {
 
     //TODO Checks section
 
-    private void hasPrimaryKeyCheck(DBTable table) {
+    protected void hasPrimaryKeyCheck(DBTable table) {
         boolean hasPrimaryKey = table.getPrimaryKey() != null;
         if (!hasPrimaryKey) {
             throw new IllegalStateException("For this operation Entity should have @Id annotated field");
         }
     }
 
-    private void hasCorrectIdTypeCheck(Object id) {
+    protected void hasCorrectIdTypeCheck(Object id) {
         if (!(id instanceof Integer) && !(id instanceof Long)) {
             throw new IllegalArgumentException("Primary key must be initialized and Integer or Long type");
         }
     }
 
-    private boolean hasRelationsCheck(Class<?> clazz) {
+    protected boolean hasRelationsCheck(Class<?> clazz) {
         DBTable dbTable = getTableByClass(clazz);
         if(dbTable.getForeignKeys().size() > 0){
             return true;
@@ -498,7 +499,7 @@ public class CrudServices {
         return false;
     }
 
-    private void isEntityCheck(Class<?> clazz) {
+    protected void isEntityCheck(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(Entity.class)) {
             throw new DataObtainingFailureException("Current class: " + clazz + Messages.ERR_CANNOT_OBTAIN_ENTITY_CLASS);
         }

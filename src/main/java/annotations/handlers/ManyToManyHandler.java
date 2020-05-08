@@ -13,6 +13,8 @@ public class ManyToManyHandler {
     private final static Map<ManyToMany, Field> manyToManyFieldMap = new HashMap<>();
     private final static Map<ManyToMany, DBColumn> manyToManyReferencedColumnMap = new HashMap<>();
     private final static List<DBTable> relationTables = new ArrayList<>();
+    private final static Map<ManyToMany, ManyToMany> firstManyToManyLinkMap = new HashMap<>();
+    private final static Map<ManyToMany, ManyToMany> secondManyToManyLinkMap = new HashMap<>();
 
     private static void findMtmAnnotInEntities() {
 
@@ -47,6 +49,9 @@ public class ManyToManyHandler {
                 }
             }
             determinePrimeMtm(mtm, secondMtm);
+            firstManyToManyLinkMap.put(mtm,secondMtm);
+            secondManyToManyLinkMap.put(secondMtm, mtm);
+
             DBTable dbTable = new DBTable();
 
             dbTable.setName(mtm.tableName());
@@ -162,6 +167,14 @@ public class ManyToManyHandler {
 
     public static Map<ManyToMany, Field> getManyToManyFieldMap() {
         return manyToManyFieldMap;
+    }
+
+    public static Map<ManyToMany, ManyToMany> getFirstManyToManyLinkMap() {
+        return firstManyToManyLinkMap;
+    }
+
+    public static Map<ManyToMany, ManyToMany> getSecondManyToManyLinkMap() {
+        return secondManyToManyLinkMap;
     }
 
     public static List<DBTable> getRelationTables() {
