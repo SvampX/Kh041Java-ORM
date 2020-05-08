@@ -1,11 +1,12 @@
 package annotations.handlers.configuration;
 
-import annotations.*;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import annotations.Column;
+import annotations.Entity;
+import annotations.GeneratedValue;
+import annotations.Id;
+import annotations.JoinColumn;
+import annotations.OneToOne;
+import annotations.Table;
 
 @Entity()
 @Table(name = "cars")
@@ -22,13 +23,23 @@ public class Car {
     @Column(name = "license_plate")
     private String licensePlate;
 
-    @ManyToMany(tableName = "person_car", inverseJoinColumnsName = "CarId", inverseJoinColumnsReferencedName = "id")
-    private List<User> persons = new ArrayList<>();
+//    @ManyToMany(tableName = "person_car", inverseJoinColumnsName = "CarId", inverseJoinColumnsReferencedName = "id")
+//    private List<User> persons = new ArrayList<>();
 
-    public Car(int id, String brandName, String licensePlate) {
-        this.id = id;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public Car(String brandName, String licensePlate) {
         this.brandName = brandName;
         this.licensePlate = licensePlate;
+    }
+
+    public Car() {
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public void setId(int id) {
@@ -43,7 +54,12 @@ public class Car {
         this.licensePlate = licensePlate;
     }
 
-    public List<User> getPersons() {
-        return persons;
+//    public List<User> getPersons() {
+//        return persons;
+//    }
+
+    public User getUser() {
+        return user;
     }
 }
+

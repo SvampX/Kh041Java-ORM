@@ -33,17 +33,17 @@ class CrudServicesTest {
 
     @Test
     void createEntityTest() {
-//        User testUser = new User();
-//        testUser.setFirstName("Alex");
-//        testUser.setLastName("Lens");
-//        testUser.setAge(25);
-//        Phone testPhone = new Phone();
-//        testPhone.setNumber("45646464");
-//        testPhone.setUser(testUser);
-//        testUser.setPhone(testPhone);
-//        Car car = new Car("LADA", "1531654");
-//        car.setUser(testUser);
-//        testUser.setCar(car);
+        User testUser = new User();
+        testUser.setFirstName("Alex");
+        testUser.setLastName("Lens");
+        testUser.setAge(25);
+        Phone testPhone = new Phone();
+        testPhone.setNumber("45646464");
+        testPhone.setUser(testUser);
+        testUser.setPhone(testPhone);
+        Car car = new Car("LADA", "1531654");
+        car.setUser(testUser);
+        testUser.setCar(car);
         Phone phone = new Phone();
         phone.setNumber("12-12-121");
         User user = new User();
@@ -52,9 +52,7 @@ class CrudServicesTest {
         user.setLastName("Angazalka");
         user.setPhone(phone);
         phone.setUser(user);
-        crudServices.create(phone);
-//        relationsLoader.create(testUser);
-        relationsLoader.create(user);
+        relationsLoader.create(testPhone);
     }
 
     @Test

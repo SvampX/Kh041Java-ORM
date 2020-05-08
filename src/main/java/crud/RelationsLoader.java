@@ -143,23 +143,19 @@ public class RelationsLoader {
         if (joinColumn.size() > 0) {
             joinObject = getObjectByField(joinColumn.iterator().next(), entity);
         }
+        if (!classesWithId.containsKey(clazz)) {
+            createEntityGetId(table, classesWithId, entity);
+            myId = classesWithId.get(clazz);
+        }
         if (joinObject != null) {
-            if (!classesWithId.containsKey(clazz)) {
-                createEntityGetId(table, classesWithId, entity);
-                myId = classesWithId.get(clazz);
-                updateQuery = buildUpdateWithJoinColumnQuery(table, myId);
-            }
             if (!classesWithId.containsKey(joinObject.getClass())) {
-                createEntityGetId(getTableByClass(joinObject.getClass()), classesWithId, joinObject);
+                initOneToOneRelations(joinObject, classesWithId, updateQuery, myId);
             }
-            joinId = classesWithId.get(joinObject.getClass());
-            updateEntityWithJoinColumn(updateQuery, joinId);
         }
         for (Field field : oneToOneFields) {
             Object oneToOneObject = getObjectByField(field, entity);
             if (oneToOneObject != null) {
-                if (!classesWithId.containsKey(clazz)) {
-                    createEntityGetId(table, classesWithId, entity);
+                if (!classesWithId.containsKey(oneToOneObject.getClass())) {
                     initOneToOneRelations(oneToOneObject, classesWithId, updateQuery, myId);
                 }
             }
@@ -169,6 +165,11 @@ public class RelationsLoader {
             table.getPrimaryKey().getField().set(entity, myId);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
+        }
+        if(joinObject!=null){
+            updateQuery = buildUpdateWithJoinColumnQuery(table, myId);
+            joinId = classesWithId.get(joinObject.getClass());
+            updateEntityWithJoinColumn(updateQuery, joinId);
         }
         return myId;
     }

@@ -29,11 +29,21 @@ public class User {
     @OneToOne
     private Phone phone;
 
-    @OneToMany(mappedBy = "userDetails")
-    private List<Address> addresses;
+    @OneToOne
+    private Car car;
 
-    @ManyToMany(tableName = "person_car", joinColumnsName = "person_id", joinColumnsReferencedName = "user_id")
-    public List<Car> myCars = new ArrayList<>();
+    public Car getCar() {
+        return car;
+    }
+
+    public void setCar(Car car) {
+        this.car = car;
+    }
+//    @OneToMany(mappedBy = "userDetails")
+//    private List<Address> addresses;
+//
+//    @ManyToMany(tableName = "person_car", joinColumnsName = "person_id", joinColumnsReferencedName = "user_id")
+//    public List<Car> myCars = new ArrayList<>();
 
     public User() {
     }
@@ -74,13 +84,13 @@ public class User {
         this.phone = phone;
     }
 
-    public List<Address> getAddresses() {
-        return addresses;
-    }
+//    public List<Address> getAddresses() {
+//        return addresses;
+//    }
 
     @Override
     public String toString() {
-        return "User{" +
+        return "annotations.more.packages.pack.User{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
